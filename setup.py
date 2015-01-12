@@ -14,7 +14,7 @@ setup(name='dnachat',
       author_email='acuroskr' '@' 'gmail.com',
       install_requires=[
           'bson>=0.3.3',
-          'twisted'
+          'twisted',
           'redis'
       ],
       entry_points={
