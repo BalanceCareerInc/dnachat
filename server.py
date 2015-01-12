@@ -11,6 +11,7 @@ from twisted.internet.threads import deferToThread
 from .decorators import must_be_in_channel
 from .dna.protocol import DnaProtocol, ProtocolError
 from .transmission import Transmitter
+from .settings import conf
 from models import Message
 
 
@@ -48,7 +49,11 @@ class ChatProtocol(DnaProtocol):
         def ready_to_receive(result):
             self.status = 'stable'
 
-        self.user = User.query(username__eq=request['user']).next()
+        module_name, func_name = conf.AUTHENTICATOR.rsplit('.')
+        authenticate = getattr(__import__(module_name), func_name)
+        self.user = authenticate(request)
+        if not self.user:
+            raise ProtocolError('Authentication failed')
         self.factory.channels.setdefault(self.user.channel, []).append(self)
         d = deferToThread(send_unread_messages, self.user.channel, request['last_published_at'])
         d.addCallback(ready_to_receive)
