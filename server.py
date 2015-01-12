@@ -49,8 +49,11 @@ class ChatProtocol(DnaProtocol):
         def ready_to_receive(result):
             self.status = 'stable'
 
-        module_name, func_name = conf.AUTHENTICATOR.rsplit('.')
-        authenticate = getattr(__import__(module_name), func_name)
+        names = conf['AUTHENTICATOR'].split('.')
+        module = __import__('.'.join(names[:-1]))
+        authenticate = module
+        for name in names[1:]:
+            authenticate = getattr(authenticate, name)
         self.user = authenticate(request)
         if not self.user:
             raise ProtocolError('Authentication failed')
