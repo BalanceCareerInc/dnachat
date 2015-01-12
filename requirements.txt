@@ -1,5 +1,0 @@
--e git+https://github.com/Gaechi/boto.git@develop#egg=boto
--e git+https://github.com/Gaechi/BynamoDB.git@master#egg=bynamodb
-twisted
-redis
-bson
