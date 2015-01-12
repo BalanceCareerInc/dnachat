@@ -1,7 +1,8 @@
 from bynamodb import patch_dynamodb_connection
 from twisted.internet import reactor
-from server import ChatFactory
-from .settings import conf
+
+from dnachat.server import ChatFactory
+from settings import conf
 
 
 def run_dnachat(config_file='localconfig.py'):
@@ -13,7 +14,3 @@ def run_dnachat(config_file='localconfig.py'):
     )
     reactor.listenTCP(conf.get('PORT', 9339), ChatFactory(conf['REDIS_HOST']))
     reactor.run()
-
-
-if __name__ == '__main__':
-    run_dnachat('conf/localconfig.py')

@@ -1,7 +1,7 @@
 # -*-coding:utf8-*-
 from functools import wraps
 
-from .dna.exceptions import ProtocolError
+from dnachat.dna.exceptions import ProtocolError
 
 
 def must_be_in_channel(func):

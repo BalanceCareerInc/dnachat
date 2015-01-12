@@ -1,18 +1,17 @@
 # -*-coding:utf8-*-
-import bson
-import redis
 import threading
 import time
 
-
+import bson
+import redis
 from twisted.internet.protocol import Factory
 from twisted.internet.threads import deferToThread
 
-from .decorators import must_be_in_channel
-from .dna.protocol import DnaProtocol, ProtocolError
-from .transmission import Transmitter
+from decorators import must_be_in_channel
+from dnachat.dna.protocol import DnaProtocol, ProtocolError
+from transmission import Transmitter
 from .settings import conf
-from models import Message
+from dnachat.models import Message
 
 
 class ChatProtocol(DnaProtocol):

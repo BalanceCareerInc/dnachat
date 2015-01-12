@@ -2,8 +2,9 @@
 import bson
 from bynamodb import patch_dynamodb_connection
 from redis import StrictRedis
+
 from chat import get_config
-from models import Message
+from dnachat.models import Message
 
 
 class ChatLogger(object):
