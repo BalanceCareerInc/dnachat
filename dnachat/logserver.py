@@ -3,7 +3,7 @@ import bson
 from bynamodb import patch_dynamodb_connection
 from redis import StrictRedis
 
-from chat import get_config
+from dnachat.settings import conf
 from dnachat.models import Message
 
 
@@ -26,13 +26,12 @@ class ChatLogger(object):
 
 
 def run_logger():
-    config = get_config('conf/localconfig.py')
     patch_dynamodb_connection(
-        host=config['DYNAMODB_HOST'],
-        port=config['DYNAMODB_PORT'],
-        is_secure=config['DYNAMODB_IS_SECURE']
+        host=conf['DYNAMODB_HOST'],
+        port=conf['DYNAMODB_PORT'],
+        is_secure=conf['DYNAMODB_IS_SECURE']
     )
-    ChatLogger(config['REDIS_HOST']).start()
+    ChatLogger(conf['REDIS_HOST']).start()
 
 if __name__ == '__main__':
     run_logger()
