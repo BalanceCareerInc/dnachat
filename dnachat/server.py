@@ -64,7 +64,7 @@ class ChatProtocol(DnaProtocol):
     def do_publish(self, request):
         message = dict(
             message=request['message'],
-            writer=self.user.username,
+            writer=self.user.id,
             published_at=time.time(),
             method=u'publish'
         )
