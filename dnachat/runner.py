@@ -17,7 +17,8 @@ def run_dnachat(config_file='localconfig.py'):
     reactor.run()
 
 
-def run_logger():
+def run_logger(config_file='localconfig.py'):
+    conf.load_from_file(config_file)
     patch_dynamodb_connection(
         host=conf['DYNAMODB_HOST'],
         port=conf['DYNAMODB_PORT'],
