@@ -14,3 +14,12 @@ def run_dnachat(config_file='localconfig.py'):
     )
     reactor.listenTCP(conf.get('PORT', 9339), ChatFactory(conf['REDIS_HOST']))
     reactor.run()
+
+
+def run_logger():
+    patch_dynamodb_connection(
+        host=conf['DYNAMODB_HOST'],
+        port=conf['DYNAMODB_PORT'],
+        is_secure=conf['DYNAMODB_IS_SECURE']
+    )
+    ChatLogger(conf['REDIS_HOST']).start()

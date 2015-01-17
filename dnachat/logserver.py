@@ -23,15 +23,3 @@ class ChatLogger(object):
                 published_at=data['published_at'],
                 message=data['message']
             )
-
-
-def run_logger():
-    patch_dynamodb_connection(
-        host=conf['DYNAMODB_HOST'],
-        port=conf['DYNAMODB_PORT'],
-        is_secure=conf['DYNAMODB_IS_SECURE']
-    )
-    ChatLogger(conf['REDIS_HOST']).start()
-
-if __name__ == '__main__':
-    run_logger()
