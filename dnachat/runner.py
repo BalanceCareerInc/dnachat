@@ -1,5 +1,6 @@
 from bynamodb import patch_dynamodb_connection
 from twisted.internet import reactor
+from dnachat.logserver import ChatLogger
 
 from dnachat.server import ChatFactory
 from settings import conf
