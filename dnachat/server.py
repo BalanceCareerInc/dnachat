@@ -63,7 +63,7 @@ class ChatProtocol(DnaProtocol):
         def publish_to_client(channel, message_):
             self.factory.redis_session.publish(channel, message_)
 
-        def write_to_sqs(channel, message_):
+        def write_to_sqs(result, channel, message_):
             message_.update(dict(channel=channel))
             self.factory.queue.write(QueueMessage(body=message_))
 
@@ -75,7 +75,7 @@ class ChatProtocol(DnaProtocol):
         )
         message = bson.dumps(message)
         d = deferToThread(publish_to_client, self.user.channel, message)
-        d.addCallback(write_to_sqs)
+        d.addCallback(write_to_sqs, self.user.channel, message)
 
     def connectionLost(self, reason=None):
         print reason
