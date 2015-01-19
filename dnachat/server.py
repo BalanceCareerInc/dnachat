@@ -74,7 +74,7 @@ class ChatProtocol(DnaProtocol):
             channel=self.user.channel
         )
         message = bson.dumps(message)
-        d = deferToThread(publish_to_client, message)
+        d = deferToThread(publish_to_client, self.user.channel, message)
         d.addCallback(write_to_sqs, message)
 
     def connectionLost(self, reason=None):
