@@ -4,6 +4,8 @@ import time
 
 import bson
 import redis
+from boto import sqs
+from boto.sqs.message import Message as QueueMessage
 from twisted.internet.protocol import Factory
 from twisted.internet.threads import deferToThread
 
@@ -11,7 +13,7 @@ from decorators import must_be_in_channel
 from dnachat.dna.protocol import DnaProtocol, ProtocolError
 from transmission import Transmitter
 from .settings import conf, func_from_package_name
-from dnachat.models import Message
+from dnachat.models import Message as MessageModel
 
 
 class ChatProtocol(DnaProtocol):
@@ -31,7 +33,7 @@ class ChatProtocol(DnaProtocol):
         def send_unread_messages(channel, published_at):
             messages = [
                 message.to_dict()
-                for message in Message.query(channel__eq=channel, published_at__gt=published_at)
+                for message in MessageModel.query(channel__eq=channel, published_at__gt=published_at)
             ]
 
             with self.pending_messages_lock:
@@ -58,6 +60,13 @@ class ChatProtocol(DnaProtocol):
 
     @must_be_in_channel
     def do_publish(self, request):
+        def publish_to_client(channel, message_):
+            self.factory.redis_session.publish(channel, message_)
+
+        def write_to_sqs(channel, message_):
+            message_.update(dict(channel=channel))
+            self.factory.queue.write(QueueMessage(body=message_))
+
         message = dict(
             message=request['message'],
             writer=self.user.id,
@@ -65,12 +74,13 @@ class ChatProtocol(DnaProtocol):
             method=u'publish'
         )
         message = bson.dumps(message)
-        self.factory.session.publish(self.user.channel, message)
+        d = deferToThread(publish_to_client, self.user.channel, message)
+        d.addCallback(write_to_sqs)
 
     def connectionLost(self, reason=None):
         print reason
         if self.user and self.user.channel:
-            self.factory.channels[self.user.channel].remove(self)
+            self.factory.chanels[self.user.channel].remove(self)
 
 
 class ChatFactory(Factory):
@@ -78,6 +88,7 @@ class ChatFactory(Factory):
     channels = dict()
 
     def __init__(self, redis_host='localhost'):
-        self.session = redis.StrictRedis(host=redis_host)
+        self.redis_session = redis.StrictRedis(host=redis_host)
+        self.queue = sqs.connect_to_region('ap-northeast-1').get_queue(conf['NOTIFICATION_QUEUE_NAME'])
         Transmitter(self).start()
 
