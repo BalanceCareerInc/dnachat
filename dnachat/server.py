@@ -80,7 +80,7 @@ class ChatProtocol(DnaProtocol):
     def connectionLost(self, reason=None):
         print reason
         if self.user and self.user.channel:
-            self.factory.chanels[self.user.channel].remove(self)
+            self.factory.channels[self.user.channel].remove(self)
 
 
 class ChatFactory(Factory):
