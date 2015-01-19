@@ -27,6 +27,7 @@ class NotificationSender(object):
                 continue
             message = bson.loads(message.get_body())
             channel = message.pop('channel')
+            message['type'] = 'chat'
             gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
             data = dict(default='default message', GCM=gcm_json)
             for subscriber in subscribers(channel):
