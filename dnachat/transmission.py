@@ -8,7 +8,7 @@ class Transmitter(Thread):
         self.factory = factory
 
     def run(self):
-        pubsub = self.factory.session.pubsub()
+        pubsub = self.factory.redis_session.pubsub()
         pubsub.psubscribe('*')
         pubsub.listen().next()
         for message in pubsub.listen():
