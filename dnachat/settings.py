@@ -4,9 +4,12 @@ __all__ = 'conf', 'func_from_package_name'
 
 class Settings(object):
     def __init__(self):
-        self.config = dict()
+        self.config = dict(
+            NOTIFICATION_QUEUE_NAME='NotificationQueue'
+        )
         self.must_have_items = (
             'AUTHENTICATOR',  # receives request, returns object that has attr 'channel', 'id'
+            'SUBSCRIBERS_RESOLVER'  # receives channel, returns dict iterable that has key 'id', 'endpoint_arn'
         )
 
     def __getitem__(self, key):
