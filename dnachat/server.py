@@ -71,7 +71,7 @@ class ChatProtocol(DnaProtocol):
             writer=self.user.id,
             published_at=time.time(),
             method=u'publish',
-            channel=request.user.channel
+            channel=self.user.channel
         )
         message = bson.dumps(message)
         d = deferToThread(publish_to_client, message)
