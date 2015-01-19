@@ -10,7 +10,7 @@ from twisted.internet.threads import deferToThread
 from decorators import must_be_in_channel
 from dnachat.dna.protocol import DnaProtocol, ProtocolError
 from transmission import Transmitter
-from .settings import conf
+from .settings import conf, func_from_package_name
 from dnachat.models import Message
 
 
@@ -48,11 +48,7 @@ class ChatProtocol(DnaProtocol):
         def ready_to_receive(result):
             self.status = 'stable'
 
-        names = conf['AUTHENTICATOR'].split('.')
-        module = __import__('.'.join(names[:-1]))
-        authenticate = module
-        for name in names[1:]:
-            authenticate = getattr(authenticate, name)
+        authenticate = func_from_package_name(conf['AUTHENTICATOR'])
         self.user = authenticate(request)
         if not self.user:
             raise ProtocolError('Authentication failed')

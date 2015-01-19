@@ -1,4 +1,5 @@
-__all__ = 'settings'
+# -*-coding: utf8-*-
+__all__ = 'conf', 'func_from_package_name'
 
 
 class Settings(object):
@@ -26,5 +27,14 @@ class Settings(object):
             if key not in config:
                 raise ValueError('Config "%s" is not found' % key)
         self.config.update(config)
+
+
+def func_from_package_name(package_name):
+    names = package_name.split('.')
+    module = __import__('.'.join(names[:-1]))
+    func = module
+    for name in names[1:]:
+        func = getattr(func, name)
+    return func
 
 conf = Settings()
