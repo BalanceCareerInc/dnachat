@@ -24,13 +24,11 @@ class NotificationSender(object):
             if not queue_message:
                 continue
             message = json.loads(queue_message.get_body())
-            print 'Got message', message
             channel = message.pop('channel')
             message['type'] = 'chat'
             gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
             data = dict(default='default message', GCM=gcm_json)
             for subscriber in self.subscribers(channel):
-                print subscriber
                 if subscriber['id'] == message['writer']:
                     continue
                 try:
