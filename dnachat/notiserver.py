@@ -19,25 +19,34 @@ class NotificationSender(object):
         Message has to have key 'message', 'writer', 'channel', 'published_at'
         """
 
+        task = self.publish()
+        task.next()
         while True:
             queue_message = self.queue.read()
             if not queue_message:
                 continue
-            message = json.loads(queue_message.get_body())
-            channel = message.pop('channel')
-            message['type'] = 'chat'
-            gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
-            data = dict(default='default message', GCM=gcm_json)
-            for subscriber in self.subscribers(channel):
-                if subscriber['id'] == message['writer']:
-                    continue
-                try:
-                    print self.sns_conn.publish(
-                        message=json.dumps(data, ensure_ascii=False),
-                        target_arn=subscriber['endpoint_arn'],
-                        message_structure='json'
-                    )
-                except boto.exception.BotoServerError:
-                    pass  # TODO: Error handling
-            self.queue.delete_message(queue_message)
+            task.send(queue_message)
 
+    def publish(self):
+        try:
+            while True:
+                queue_message = (yield)
+                message = json.loads(queue_message.get_body())
+                channel = message.pop('channel')
+                message['type'] = 'chat'
+                gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
+                data = dict(default='default message', GCM=gcm_json)
+                for subscriber in self.subscribers(channel):
+                    if subscriber['id'] == message['writer']:
+                        continue
+                    try:
+                        print self.sns_conn.publish(
+                            message=json.dumps(data, ensure_ascii=False),
+                            target_arn=subscriber['endpoint_arn'],
+                            message_structure='json'
+                        )
+                    except boto.exception.BotoServerError:
+                        pass  # TODO: Error handling
+                self.queue.delete_message(queue_message)
+        except GeneratorExit:
+            pass
