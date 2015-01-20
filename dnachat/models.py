@@ -13,4 +13,4 @@ class Message(Model):
     message = StringAttribute()
 
     def to_dict(self):
-        return dict(writer=self.user, published_at=float(self.published_at), message=self.message)
+        return dict(writer=self.user, published_at=float(self.published_at), message=self.message, channel=self.channel)
