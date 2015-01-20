@@ -10,7 +10,7 @@ from boto.sqs.message import Message as QueueMessage
 from twisted.internet.protocol import Factory
 from twisted.internet.threads import deferToThread
 
-from decorators import must_be_in_channel
+from decorators import in_channel_required
 from dnachat.dna.protocol import DnaProtocol, ProtocolError
 from transmission import Transmitter
 from .settings import conf, func_from_package_name
@@ -59,7 +59,7 @@ class ChatProtocol(DnaProtocol):
         d = deferToThread(send_unread_messages, self.user.channel, request['last_published_at'])
         d.addCallback(ready_to_receive)
 
-    @must_be_in_channel
+    @in_channel_required
     def do_publish(self, request):
         def publish_to_client(channel, message_):
             self.factory.redis_session.publish(channel, bson.dumps(message_))

@@ -4,10 +4,10 @@ from functools import wraps
 from dnachat.dna.exceptions import ProtocolError
 
 
-def must_be_in_channel(func):
+def in_channel_required(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if self.user is not None and self.user.channel is None:
+        if self.user is None or self.user.channel is None:
             raise ProtocolError
         return func(self, *args, **kwargs)
     return wrapper
