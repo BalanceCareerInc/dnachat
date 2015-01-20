@@ -3,6 +3,7 @@ import threading
 import time
 
 import bson
+import json
 import redis
 from boto import sqs
 from boto.sqs.message import Message as QueueMessage
@@ -61,10 +62,10 @@ class ChatProtocol(DnaProtocol):
     @must_be_in_channel
     def do_publish(self, request):
         def publish_to_client(channel, message_):
-            self.factory.redis_session.publish(channel, message_)
+            self.factory.redis_session.publish(channel, bson.dumps(message_))
 
         def write_to_sqs(result, message_):
-            self.factory.queue.write(QueueMessage(body=message_))
+            self.factory.queue.write(QueueMessage(body=json.dumps(message_)))
 
         message = dict(
             message=request['message'],
@@ -73,7 +74,6 @@ class ChatProtocol(DnaProtocol):
             method=u'publish',
             channel=self.user.channel
         )
-        message = bson.dumps(message)
         d = deferToThread(publish_to_client, self.user.channel, message)
         d.addCallback(write_to_sqs, message)
 
