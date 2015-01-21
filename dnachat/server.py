@@ -40,10 +40,13 @@ class ChatProtocol(DnaProtocol):
     @auth_required
     def do_unread(self, request):
         messages = []
-        for channel in Joiner.query(user_id=self.user.id):  # TODO: batch_get
+        for joiner in Joiner.query(user_id=self.user.id):  # TODO: batch_get
             messages += [
                 message.to_dict()
-                for message in DnaMessage.query(channel__eq=channel, published_at__gt=request['last_published_at'])
+                for message in DnaMessage.query(
+                    channel__eq=joiner.channel,
+                    published_at__gt=request['last_published_at']
+                )
             ]
 
         self.transport.write(bson.dumps(dict(method=u'unread', messages=messages)))
