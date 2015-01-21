@@ -18,7 +18,7 @@ from .dna.protocol import DnaProtocol, ProtocolError
 from dnachat.adapter import authenticate
 from .transmission import Transmitter
 from .settings import conf
-from .models import Message as DnaMessage, Joiner
+from .models import Message as DnaMessage, Channel
 
 
 class ChatProtocol(DnaProtocol):
@@ -37,7 +37,7 @@ class ChatProtocol(DnaProtocol):
 
     def do_authenticate(self, request):
         self.user = authenticate(request)
-        self.user.channels = [joiner.channel for joiner in Joiner.channels_of(self.user.id)]
+        self.user.channels = [joiner.channel for joiner in Channel.channels_of(self.user.id)]
         if not self.user:
             raise ProtocolError('Authentication failed')
         self.transport.write(bson.dumps(dict(method=u'authenticate', status='OK')))
@@ -46,13 +46,13 @@ class ChatProtocol(DnaProtocol):
     def do_create(self, request):
         def get_from_exists_channels(channels, partner_id):
             for channel in channels:
-                for joiner in Joiner.users_of(channel):
+                for joiner in Channel.users_of(channel):
                     if joiner.user_id == partner_id:
                         return channel
             raise ItemNotFoundException
 
         def create_channel(err, user_ids):
-            channel = Joiner.create_channel(user_ids)
+            channel = Channel.create_channel(user_ids)
             return channel
 
         def send_channel(channel):
@@ -81,7 +81,7 @@ class ChatProtocol(DnaProtocol):
         def check_is_able_to_join(channel):
             permission_to_join = False
 
-            for joiner in Joiner.users_of(channel):
+            for joiner in Channel.users_of(channel):
                 if joiner.user_id == self.user.id:
                     permission_to_join = True
                     break

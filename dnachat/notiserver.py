@@ -3,7 +3,7 @@ import boto
 import json
 
 from boto import sqs, sns
-from dnachat.models import Joiner
+from dnachat.models import Channel
 
 from .settings import conf
 from .adapter import get_user_by_id
@@ -38,7 +38,7 @@ class NotificationSender(object):
                 message['type'] = 'chat'
                 gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
                 data = dict(default='default message', GCM=gcm_json)
-                for joiner in Joiner.query('ChannelIndex', channel__eq=channel):
+                for joiner in Channel.query('ChannelIndex', channel__eq=channel):
                     if joiner.user_id == message['writer']:
                         continue
                     try:

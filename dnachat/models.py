@@ -6,11 +6,11 @@ from bynamodb.model import Model
 from .settings import conf
 
 
-class Joiner(Model):
+class Channel(Model):
     table_name = '%sJoiner' % conf.get('prefix', '')
 
     key = StringAttribute(hash_key=True)
-    channel = StringAttribute()
+    name = StringAttribute()
     user_id = StringAttribute()
 
     class UserIndex(GlobalAllIndex):
