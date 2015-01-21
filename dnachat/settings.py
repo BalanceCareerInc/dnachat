@@ -1,5 +1,5 @@
 # -*-coding: utf8-*-
-__all__ = 'conf', 'func_from_package_name'
+__all__ = 'conf'
 
 
 class Settings(object):
@@ -30,14 +30,19 @@ class Settings(object):
             if key not in config:
                 raise ValueError('Config "%s" is not found' % key)
         self.config.update(config)
+        self.patch_all()
 
+    def patch_all(self):
+        import adapter
+        adapter.authenticate = self._func_from_package_name(self.config['AUTHENTICATOR'])
+        adapter.get_user_by_id = self._func_from_package_name(self.config['USER_RESOLVER'])
 
-def func_from_package_name(package_name):
-    names = package_name.split('.')
-    module = __import__('.'.join(names[:-1]))
-    func = module
-    for name in names[1:]:
-        func = getattr(func, name)
-    return func
+    def _func_from_package_name(self, package_name):
+        names = package_name.split('.')
+        module = __import__('.'.join(names[:-1]))
+        func = module
+        for name in names[1:]:
+            func = getattr(func, name)
+        return func
 
 conf = Settings()

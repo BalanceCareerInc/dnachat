@@ -5,7 +5,8 @@ import json
 from boto import sqs, sns
 from dnachat.models import Joiner
 
-from .settings import conf, func_from_package_name
+from .settings import conf
+from .adapter import get_user_by_id
 
 
 class NotificationSender(object):
@@ -13,7 +14,6 @@ class NotificationSender(object):
         sqs_conn = sqs.connect_to_region('ap-northeast-1')
         self.queue = sqs_conn.get_queue(conf['NOTIFICATION_QUEUE_NAME'])
         self.sns_conn = sns.connect_to_region('ap-northeast-1')
-        self.get_user = func_from_package_name(conf['USER_RESOLVER'])
 
     def start(self):
         """
@@ -42,11 +42,11 @@ class NotificationSender(object):
                     if joiner.user_id == message['writer']:
                         continue
                     try:
-                        print self.sns_conn.publish(
+                        print '\t%s' % str(self.sns_conn.publish(
                             message=json.dumps(data, ensure_ascii=False),
-                            target_arn=self.get_user(joiner.user_id).endpoint_arn,
+                            target_arn=get_user_by_id(joiner.user_id).endpoint_arn,
                             message_structure='json'
-                        )
+                        ))
                     except boto.exception.BotoServerError:
                         pass  # TODO: Error handling
                 self.queue.delete_message(queue_message)

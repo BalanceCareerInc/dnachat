@@ -15,8 +15,9 @@ from twisted.internet.threads import deferToThread
 
 from .decorators import in_channel_required, auth_required
 from .dna.protocol import DnaProtocol, ProtocolError
+from dnachat.adapter import authenticate
 from .transmission import Transmitter
-from .settings import conf, func_from_package_name
+from .settings import conf
 from .models import Message as DnaMessage, Joiner
 
 
@@ -35,7 +36,6 @@ class ChatProtocol(DnaProtocol):
         processor(request)
 
     def do_authenticate(self, request):
-        authenticate = func_from_package_name(conf['AUTHENTICATOR'])
         self.user = authenticate(request)
         self.user.channels = [joiner.channel for joiner in
                               Joiner.query('UserIndex', user_id__eq=self.user.id)]
