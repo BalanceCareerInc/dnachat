@@ -1,3 +1,4 @@
+from uuid import uuid1
 from bynamodb.attributes import StringAttribute, NumberAttribute
 from bynamodb.indexes import GlobalAllIndex
 from bynamodb.model import Model
@@ -23,6 +24,23 @@ class Joiner(Model):
 
         read_throughput = 1
         write_throughput = 1
+
+    @classmethod
+    def users_of(cls, channel):
+        return cls.query('ChannelIndex', channel__eq=channel)
+
+    @classmethod
+    def channels_of(cls, user_id):
+        return cls.query('UserIndex', user_id__eq=user_id)
+
+    @classmethod
+    def create_channel(cls, user_ids):
+        channel = str(uuid1())
+        for user_id in user_ids:
+            cls.put_item(key='%s_%s' % (channel, user_id),
+                         channel=channel,
+                         user_id=user_id)
+        return channel
 
 
 class Message(Model):

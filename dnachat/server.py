@@ -37,8 +37,7 @@ class ChatProtocol(DnaProtocol):
 
     def do_authenticate(self, request):
         self.user = authenticate(request)
-        self.user.channels = [joiner.channel for joiner in
-                              Joiner.query('UserIndex', user_id__eq=self.user.id)]
+        self.user.channels = [joiner.channel for joiner in Joiner.channels_of(self.user.id)]
         if not self.user:
             raise ProtocolError('Authentication failed')
         self.transport.write(bson.dumps(dict(method=u'authenticate', status='OK')))
@@ -47,19 +46,13 @@ class ChatProtocol(DnaProtocol):
     def do_create(self, request):
         def get_from_exists_channels(channels, partner_id):
             for channel in channels:
-                for joiner in Joiner.query('ChannelIndex', channel_eq=channel):
+                for joiner in Joiner.users_of(channel):
                     if joiner.user_id == partner_id:
                         return channel
             raise ItemNotFoundException
 
         def create_channel(err, user_ids):
-            channel = str(uuid1())
-            for user_id in user_ids:
-                Joiner.put_item(
-                    key='%s_%s' % (channel, user_id),
-                    channel=channel,
-                    user_id=user_id
-                )
+            channel = Joiner.create_channel(user_ids)
             return channel
 
         def send_channel(channel):
@@ -88,7 +81,7 @@ class ChatProtocol(DnaProtocol):
         def check_is_able_to_join(channel):
             permission_to_join = False
 
-            for joiner in Joiner.query('ChannelIndex', channel__eq=channel):
+            for joiner in Joiner.users_of(channel):
                 if joiner.user_id == self.user.id:
                     permission_to_join = True
                     break
