@@ -33,6 +33,7 @@ class ChatProtocol(DnaProtocol):
     def do_authenticate(self, request):
         authenticate = func_from_package_name(conf['AUTHENTICATOR'])
         self.user = authenticate(request)
+        self.user.channels = [joiner.channel for joiner in Joiner.query(user_id=self.user.id)]
         if not self.user:
             raise ProtocolError('Authentication failed')
         self.transport.write(bson.dumps(dict(method=u'authenticate', status='OK')))
@@ -40,11 +41,11 @@ class ChatProtocol(DnaProtocol):
     @auth_required
     def do_unread(self, request):
         messages = []
-        for joiner in Joiner.query(user_id=self.user.id):  # TODO: batch_get
+        for channel in self.user.channels:
             messages += [
                 message.to_dict()
                 for message in DnaMessage.query(
-                    channel__eq=joiner.channel,
+                    channel__eq=channel,
                     published_at__gt=request['last_published_at']
                 )
             ]
