@@ -1,25 +1,29 @@
 # -*-coding:utf8-*-
-import threading
-import time
 
 import bson
 import json
+from bynamodb.exceptions import ItemNotFoundException
 import redis
+import threading
+import time
+
 from boto import sqs
 from boto.sqs.message import Message as QueueMessage
+from uuid import uuid1
 from twisted.internet.protocol import Factory
 from twisted.internet.threads import deferToThread
 
-from decorators import in_channel_required, auth_required
-from dnachat.dna.protocol import DnaProtocol, ProtocolError
-from transmission import Transmitter
+from .decorators import in_channel_required, auth_required
+from .dna.protocol import DnaProtocol, ProtocolError
+from .transmission import Transmitter
 from .settings import conf, func_from_package_name
-from dnachat.models import Message as DnaMessage, Joiner
+from .models import Message as DnaMessage, Joiner
 
 
 class ChatProtocol(DnaProtocol):
     def __init__(self):
         self.user = None
+        self.channel = None
         self.status = 'pending'
         self.pending_messages = []
         self.pending_messages_lock = threading.Lock()
@@ -33,10 +37,37 @@ class ChatProtocol(DnaProtocol):
     def do_authenticate(self, request):
         authenticate = func_from_package_name(conf['AUTHENTICATOR'])
         self.user = authenticate(request)
-        self.user.channels = [joiner.channel for joiner in Joiner.query(user_id=self.user.id)]
+        self.user.channels = [joiner.channel for joiner in
+                              Joiner.query('UserIndex', user_id__eq=self.user.id)]
         if not self.user:
             raise ProtocolError('Authentication failed')
         self.transport.write(bson.dumps(dict(method=u'authenticate', status='OK')))
+
+    @auth_required
+    def do_create(self, request):
+        def get_from_exists_channels(channels, partner_id):
+            for channel in channels:
+                for joiner in Joiner.query('ChannelIndex', channel_eq=channel):
+                    if joiner.user_id == partner_id:
+                        return channel
+            raise ItemNotFoundException
+
+        def create_channel(err, user_ids):
+            channel = str(uuid1())
+            for user_id in user_ids:
+                Joiner.put_item(
+                    key='%s_%s' % (channel, user_id),
+                    channel=channel,
+                    user_id=user_id
+                )
+            return channel
+
+        def send_channel(channel):
+            self.transport.write(bson.dumps(dict(method=u'create', channel=channel)))
+
+        d = deferToThread(get_from_exists_channels, self.user.channels, request['partner_id'])
+        d.addErrback(create_channel, (self.user.id, request['partner_id']))
+        d.addCallback(send_channel)
 
     @auth_required
     def do_unread(self, request):
@@ -56,8 +87,9 @@ class ChatProtocol(DnaProtocol):
     def do_join(self, request):
         def check_is_able_to_join(channel):
             permission_to_join = False
-            for joiner in Joiner.query(channel__eq=channel):
-                if joiner.user_id == request.user.id:
+
+            for joiner in Joiner.query('ChannelIndex', channel__eq=channel):
+                if joiner.user_id == self.user.id:
                     permission_to_join = True
                     break
             else:
@@ -67,6 +99,7 @@ class ChatProtocol(DnaProtocol):
                 raise ProtocolError('No permission to join')
 
         def join_channel(result, channel):
+            self.channel = channel
             self.factory.channels.setdefault(channel, []).append(self)
 
         d = deferToThread(check_is_able_to_join, request['channel'])
@@ -85,15 +118,15 @@ class ChatProtocol(DnaProtocol):
             writer=self.user.id,
             published_at=time.time(),
             method=u'publish',
-            channel=self.user.channel
+            channel=self.channel
         )
-        d = deferToThread(publish_to_client, self.user.channel, message)
+        d = deferToThread(publish_to_client, self.channel, message)
         d.addCallback(write_to_sqs, message)
 
     def connectionLost(self, reason=None):
         print reason
-        if self.user and self.user.channel:
-            self.factory.channels[self.user.channel].remove(self)
+        if self.user and self.channel:
+            self.factory.channels[self.channel].remove(self)
 
 
 class ChatFactory(Factory):

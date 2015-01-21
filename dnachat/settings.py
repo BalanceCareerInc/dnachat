@@ -8,8 +8,8 @@ class Settings(object):
             NOTIFICATION_QUEUE_NAME='NotificationQueue'
         )
         self.must_have_items = (
-            'AUTHENTICATOR',  # receives request, returns object that has attr 'channel', 'id'
-            'SUBSCRIBERS_RESOLVER'  # receives channel, returns dict iterable that has key 'id', 'endpoint_arn'
+            'AUTHENTICATOR',  # receives request, returns User object
+            'USER_RESOLVER',  # receives user id, returns User object
         )
 
     def __getitem__(self, key):

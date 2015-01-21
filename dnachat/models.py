@@ -6,13 +6,20 @@ from .settings import conf
 
 
 class Joiner(Model):
-    table_name = '%sChannel' % conf.get('prefix', '')
+    table_name = '%sJoiner' % conf.get('prefix', '')
 
-    channel = StringAttribute(hash_key=True)
+    key = StringAttribute(hash_key=True)
+    channel = StringAttribute()
     user_id = StringAttribute()
 
     class UserIndex(GlobalAllIndex):
         hash_key = 'user_id'
+
+        read_throughput = 1
+        write_throughput = 1
+
+    class ChannelIndex(GlobalAllIndex):
+        hash_key = 'channel'
 
         read_throughput = 1
         write_throughput = 1

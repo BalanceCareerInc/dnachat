@@ -16,7 +16,7 @@ def auth_required(func):
 def in_channel_required(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if self.user is None or self.user.channel is None:
+        if self.channel is None:
             raise ProtocolError
         return func(self, *args, **kwargs)
     return wrapper
