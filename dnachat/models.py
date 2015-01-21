@@ -1,7 +1,21 @@
 from bynamodb.attributes import StringAttribute, NumberAttribute
+from bynamodb.indexes import GlobalAllIndex
 from bynamodb.model import Model
 
 from .settings import conf
+
+
+class Joiner(Model):
+    table_name = '%sChannel' % conf.get('prefix', '')
+
+    channel = StringAttribute(hash_key=True)
+    user_id = StringAttribute()
+
+    class UserIndex(GlobalAllIndex):
+        hash_key = 'user_id'
+
+        read_throughput = 1
+        write_throughput = 1
 
 
 class Message(Model):
