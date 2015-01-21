@@ -10,11 +10,11 @@ from boto.sqs.message import Message as QueueMessage
 from twisted.internet.protocol import Factory
 from twisted.internet.threads import deferToThread
 
-from decorators import in_channel_required
+from decorators import in_channel_required, auth_required
 from dnachat.dna.protocol import DnaProtocol, ProtocolError
 from transmission import Transmitter
 from .settings import conf, func_from_package_name
-from dnachat.models import Message as MessageModel
+from dnachat.models import Message as DnaMessage, Joiner
 
 
 class ChatProtocol(DnaProtocol):
@@ -31,33 +31,42 @@ class ChatProtocol(DnaProtocol):
         processor(request)
 
     def do_authenticate(self, request):
-        def send_unread_messages(channel, published_at):
-            messages = [
-                message.to_dict()
-                for message in MessageModel.query(channel__eq=channel, published_at__gt=published_at)
-            ]
-
-            with self.pending_messages_lock:
-                pending_messages = list(self.pending_messages)
-                self.pending_messages = []
-
-            for message in pending_messages:
-                message = bson.loads(message)
-                del message['method']
-                messages.append(message)
-
-            self.transport.write(bson.dumps(dict(method=u'unread', messages=messages)))
-
-        def ready_to_receive(result):
-            self.status = 'stable'
-
         authenticate = func_from_package_name(conf['AUTHENTICATOR'])
         self.user = authenticate(request)
         if not self.user:
             raise ProtocolError('Authentication failed')
-        self.factory.channels.setdefault(self.user.channel, []).append(self)
-        d = deferToThread(send_unread_messages, self.user.channel, request['last_published_at'])
-        d.addCallback(ready_to_receive)
+        self.transport.write(bson.dumps(dict(method=u'authenticate', status='OK')))
+
+    @auth_required
+    def do_unread(self, request):
+        messages = []
+        for channel in Joiner.query(user_id=self.user.id):  # TODO: batch_get
+            messages += [
+                message.to_dict()
+                for message in DnaMessage.query(channel__eq=channel, published_at__gt=request['last_published_at'])
+            ]
+
+        self.transport.write(bson.dumps(dict(method=u'unread', messages=messages)))
+
+    @auth_required
+    def do_join(self, request):
+        def check_is_able_to_join(channel):
+            permission_to_join = False
+            for joiner in Joiner.query(channel__eq=channel):
+                if joiner.user_id == request.user.id:
+                    permission_to_join = True
+                    break
+            else:
+                raise ProtocolError('Channel is not exists')
+
+            if not permission_to_join:
+                raise ProtocolError('No permission to join')
+
+        def join_channel(result, channel):
+            self.factory.channels.setdefault(channel, []).append(self)
+
+        d = deferToThread(check_is_able_to_join, request['channel'])
+        d.addCallback(join_channel, request['channel'])
 
     @in_channel_required
     def do_publish(self, request):
