@@ -16,7 +16,7 @@ class Channel(Model):
         write_throughput = 1
 
     class ChannelIndex(GlobalAllIndex):
-        hash_key = 'channel'
+        hash_key = 'name'
 
         read_throughput = 1
         write_throughput = 1
