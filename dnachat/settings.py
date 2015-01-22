@@ -40,6 +40,9 @@ class Settings(object):
             import models
             models.Channel = self._func_from_package_name(self.config['CHANNEL_MODEL'])
 
+    def update(self, dict_):
+        self.config.update(dict_)
+
     def _func_from_package_name(self, package_name):
         names = package_name.split('.')
         module = __import__('.'.join(names[:-1]))
