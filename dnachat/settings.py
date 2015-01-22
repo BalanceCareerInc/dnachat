@@ -5,7 +5,7 @@ __all__ = 'conf'
 class Settings(object):
     def __init__(self):
         self.config = dict(
-            NOTIFICATION_QUEUE_NAME='NotificationQueue'
+            NOTIFICATION_QUEUE_NAME='NotificationQueue',
         )
         self.must_have_items = (
             'AUTHENTICATOR',  # receives request, returns User object
@@ -36,6 +36,9 @@ class Settings(object):
         import adapter
         adapter.authenticate = self._func_from_package_name(self.config['AUTHENTICATOR'])
         adapter.get_user_by_id = self._func_from_package_name(self.config['USER_RESOLVER'])
+        if 'CHANNEL_MODEL' in self.config:
+            import models
+            models.Channel = self._func_from_package_name(self.config['CHANNEL_MODEL'])
 
     def _func_from_package_name(self, package_name):
         names = package_name.split('.')
