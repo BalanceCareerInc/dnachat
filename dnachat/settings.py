@@ -39,6 +39,7 @@ class Settings(object):
         if 'CHANNEL_MODEL' in self.config:
             import models
             models.Channel = self._func_from_package_name(self.config['CHANNEL_MODEL'])
+            models.skip_create = True
 
     def update(self, dict_):
         self.config.update(dict_)
