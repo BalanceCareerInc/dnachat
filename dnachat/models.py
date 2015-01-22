@@ -7,8 +7,6 @@ from .settings import conf
 
 
 class Channel(Model):
-    table_name = '%sJoiner' % conf.get('prefix', '')
-
     key = StringAttribute(hash_key=True)
     name = StringAttribute()
     user_id = StringAttribute()
@@ -44,8 +42,6 @@ class Channel(Model):
 
 
 class Message(Model):
-    table_name = '%sMessage' % conf.get('prefix', '')
-
     channel = StringAttribute(hash_key=True)
     published_at = NumberAttribute(range_key=True)
     user = StringAttribute()
