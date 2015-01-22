@@ -3,8 +3,6 @@ from bynamodb.attributes import StringAttribute, NumberAttribute
 from bynamodb.indexes import GlobalAllIndex
 from bynamodb.model import Model
 
-from .settings import conf
-
 
 class Channel(Model):
     key = StringAttribute(hash_key=True)
