@@ -12,6 +12,12 @@ class Settings(object):
             'USER_RESOLVER',  # receives user id, returns User object
         )
 
+    def values(self):
+        return self.config.values()
+
+    def keys(self):
+        return self.config.keys()
+
     def __getitem__(self, key):
         return self.config[key]
 
