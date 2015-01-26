@@ -1,9 +1,7 @@
 # -*-coding:utf8-*-
 import bson
-from bynamodb import patch_dynamodb_connection
 from redis import StrictRedis
 
-from dnachat.settings import conf
 from dnachat.models import Message
 
 
