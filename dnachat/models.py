@@ -22,8 +22,8 @@ class Channel(Model):
         write_throughput = 1
 
     @classmethod
-    def users_of(cls, channel):
-        return cls.query('ChannelIndex', channel__eq=channel)
+    def users_of(cls, channel_name):
+        return cls.query('ChannelIndex', name__eq=channel_name)
 
     @classmethod
     def channels_of(cls, user_id):
@@ -31,12 +31,12 @@ class Channel(Model):
 
     @classmethod
     def create_channel(cls, user_ids):
-        channel = str(uuid1())
+        channel_name = str(uuid1())
         for user_id in user_ids:
-            cls.put_item(key='%s_%s' % (channel, user_id),
-                         channel=channel,
+            cls.put_item(key='%s_%s' % (channel_name, user_id),
+                         name=channel_name,
                          user_id=user_id)
-        return channel
+        return channel_name
 
 
 class Message(Model):
