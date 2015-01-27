@@ -38,7 +38,7 @@ class NotificationSender(object):
                 message['type'] = 'chat'
                 gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
                 data = dict(default='default message', GCM=gcm_json)
-                for joiner in Channel.query('ChannelIndex', channel__eq=channel):
+                for joiner in Channel.users_of(channel):
                     if joiner.user_id == message['writer']:
                         continue
                     try:
