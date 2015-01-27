@@ -70,7 +70,7 @@ class ChatProtocol(DnaProtocol):
                 message.to_dict()
                 for message in DnaMessage.query(
                     channel__eq=channel,
-                    published_at__gt=request['last_published_at']
+                    published_at__gt=channel.last_read_at
                 )
             ]
 

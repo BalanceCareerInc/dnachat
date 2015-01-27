@@ -8,6 +8,7 @@ class Channel(Model):
     key = StringAttribute(hash_key=True)
     name = StringAttribute()
     user_id = StringAttribute()
+    last_read_at = NumberAttribute(default=0.0)
 
     class UserIndex(GlobalAllIndex):
         hash_key = 'user_id'
