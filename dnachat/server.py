@@ -70,6 +70,10 @@ class ChatProtocol(DnaProtocol):
 
     @auth_required
     def do_unread(self, request):
+        def save_last_read_at(channel_, last_read_at):
+            channel_.last_read_at = last_read_at
+            channel_.save()
+
         messages = []
         channels = self.user.channels
         if 'channel' in request:
@@ -81,13 +85,16 @@ class ChatProtocol(DnaProtocol):
             if not channels:
                 raise ProtocolError('Not a valid channel')
         for channel in channels:
-            messages += [
+            new_messages = [
                 message.to_dict()
                 for message in DnaMessage.query(
                     channel__eq=channel.name,
                     published_at__gt=channel.last_read_at
                 )
             ]
+            if new_messages:
+                deferToThread(save_last_read_at, channel, new_messages[-1].published_at)
+                messages += new_messages
 
         self.transport.write(bson.dumps(dict(method=u'unread', messages=messages)))
 
