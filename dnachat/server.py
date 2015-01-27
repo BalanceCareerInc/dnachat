@@ -36,7 +36,7 @@ class ChatProtocol(DnaProtocol):
 
     def do_authenticate(self, request):
         self.user = authenticate(request)
-        self.user.id = str(self.user.id)
+        self.user.id = str(self.user.id).decode('utf8')
         self.user.channels = list(Channel.channels_of(self.user.id))
         if not self.user:
             raise ProtocolError('Authentication failed')
