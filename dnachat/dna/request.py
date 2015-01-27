@@ -9,6 +9,9 @@ class Request(object):
         self.method = method
         self._data = data
 
+    def __contains__(self, key):
+        return key in self._data
+
     def __getitem__(self, key):
         try:
             return self._data[key]
