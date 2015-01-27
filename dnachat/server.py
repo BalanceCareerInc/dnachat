@@ -79,17 +79,11 @@ class ChatProtocol(DnaProtocol):
     @auth_required
     def do_join(self, request):
         def check_is_able_to_join(channel):
-            permission_to_join = False
-
             for joiner in Channel.users_of(channel):
                 if joiner.user_id == self.user.id:
-                    permission_to_join = True
                     break
             else:
                 raise ProtocolError('Channel is not exists')
-
-            if not permission_to_join:
-                raise ProtocolError('No permission to join')
 
         def join_channel(result, channel):
             self.channel = channel
