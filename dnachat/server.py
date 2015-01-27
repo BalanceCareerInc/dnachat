@@ -9,13 +9,12 @@ import time
 
 from boto import sqs
 from boto.sqs.message import Message as QueueMessage
-from uuid import uuid1
 from twisted.internet.protocol import Factory
 from twisted.internet.threads import deferToThread
 
 from .decorators import in_channel_required, auth_required
 from .dna.protocol import DnaProtocol, ProtocolError
-from dnachat.adapter import authenticate
+from .adapter import authenticate
 from .transmission import Transmitter
 from .settings import conf
 from .models import Message as DnaMessage, Channel
@@ -26,6 +25,7 @@ class ChatProtocol(DnaProtocol):
         self.user = None
         self.channel = None
         self.status = 'pending'
+        self.last_read_at = dict()
         self.pending_messages = []
         self.pending_messages_lock = threading.Lock()
 
@@ -37,7 +37,7 @@ class ChatProtocol(DnaProtocol):
 
     def do_authenticate(self, request):
         self.user = authenticate(request)
-        self.user.channels = [joiner.channel for joiner in Channel.channels_of(self.user.id)]
+        self.user.channels = list(Channel.channels_of(self.user.id))
         if not self.user:
             raise ProtocolError('Authentication failed')
         self.transport.write(bson.dumps(dict(method=u'authenticate', status='OK')))
@@ -46,17 +46,23 @@ class ChatProtocol(DnaProtocol):
     def do_create(self, request):
         def get_from_exists_channels(channels, partner_id):
             for channel in channels:
-                for joiner in Channel.users_of(channel):
-                    if joiner.user_id == partner_id:
-                        return channel
+                for partner_channel in Channel.users_of(channel.name):
+                    if partner_channel.user_id == partner_id:
+                        return partner_channel.name
             raise ItemNotFoundException
 
         def create_channel(err, user_ids):
-            channel = Channel.create_channel(user_ids)
-            return channel
+            channels = Channel.create_channel(user_ids)
+            my_channel = [channel for channel in channels if channel.user_id == self.user.id][0]
+            self.user.channels.append(my_channel)
+            return my_channel.name
 
         def send_channel(channel):
-            self.transport.write(bson.dumps(dict(method=u'create', channel=channel)))
+            self.transport.write(bson.dumps(dict(
+                method=u'create',
+                channel=channel,
+                partner_id=request['partner_id']
+            )))
 
         d = deferToThread(get_from_exists_channels, self.user.channels, request['partner_id'])
         d.addErrback(create_channel, (self.user.id, request['partner_id']))
@@ -69,7 +75,7 @@ class ChatProtocol(DnaProtocol):
             messages += [
                 message.to_dict()
                 for message in DnaMessage.query(
-                    channel__eq=channel,
+                    channel__eq=channel.name,
                     published_at__gt=channel.last_read_at
                 )
             ]
@@ -112,8 +118,13 @@ class ChatProtocol(DnaProtocol):
 
     def connectionLost(self, reason=None):
         print reason
-        if self.user and self.channel:
-            self.factory.channels[self.channel].remove(self)
+        if self.user:
+            if self.channel:
+                self.factory.channels[self.channel].remove(self)
+            for channel in self.user.channels:
+                if channel.name in self.last_read_at:
+                    channel.last_read_at = self.last_read_at.pop(channel.name)['last_read_at']
+                    channel.save()
 
 
 class ChatFactory(Factory):

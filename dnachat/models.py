@@ -22,6 +22,9 @@ class Channel(Model):
         read_throughput = 1
         write_throughput = 1
 
+    def to_dict(self):
+        return dict(key=self.key, name=self.name, last_read_at=self.last_read_at)
+
     @classmethod
     def users_of(cls, channel_name):
         return cls.query('ChannelIndex', name__eq=channel_name)
@@ -33,11 +36,14 @@ class Channel(Model):
     @classmethod
     def create_channel(cls, user_ids):
         channel_name = str(uuid1())
+        channels = []
         for user_id in user_ids:
-            cls.put_item(key='%s_%s' % (channel_name, user_id),
-                         name=channel_name,
-                         user_id=user_id)
-        return channel_name
+            channels.append(cls.put_item(
+                key='%s_%s' % (channel_name, user_id),
+                name=channel_name,
+                user_id=user_id
+            ))
+        return channels
 
 
 class Message(Model):

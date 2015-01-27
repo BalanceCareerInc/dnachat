@@ -18,7 +18,7 @@ class Transmitter(Thread):
             data = bson.loads(message['data'])
             for client in self.factory.channels[message['channel']]:
                 client.transport.write(message['data'])
-            deferToThread(self.mark_read, message['channel'], data['published_at'])
+                client.last_read_at[message['channel']] = data['published_at']
 
     def mark_read(self, channel_name, published_at):
         for client in self.factory.channels[channel_name]:
