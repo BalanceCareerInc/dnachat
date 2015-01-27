@@ -93,7 +93,7 @@ class ChatProtocol(DnaProtocol):
                 )
             ]
             if new_messages:
-                deferToThread(save_last_read_at, channel, new_messages[-1].published_at)
+                deferToThread(save_last_read_at, channel, new_messages[-1]['published_at'])
                 messages += new_messages
 
         self.transport.write(bson.dumps(dict(method=u'unread', messages=messages)))
