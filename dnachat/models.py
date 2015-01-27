@@ -41,7 +41,7 @@ class Channel(Model):
             channels.append(cls.put_item(
                 key='%s_%s' % (channel_name, user_id),
                 name=channel_name,
-                user_id=user_id
+                user_id=str(user_id)
             ))
         return channels
 
