@@ -25,7 +25,6 @@ class ChatProtocol(DnaProtocol):
         self.user = None
         self.channel = None
         self.status = 'pending'
-        self.last_read_at = dict()
         self.pending_messages = []
         self.pending_messages_lock = threading.Lock()
 
@@ -100,17 +99,22 @@ class ChatProtocol(DnaProtocol):
             else:
                 raise ProtocolError('Channel is not exists')
 
-        def join_channel(result, channel):
-            self.channel = channel
-            self.factory.channels.setdefault(channel, []).append(self)
+        def join_channel(result, channel_name):
+            self.channel = [channel for channel in self.user.channels
+                            if channel.name == channel_name][0]
+            self.factory.channels.setdefault(channel_name, []).append(self)
 
         d = deferToThread(check_is_able_to_join, request['channel'])
         d.addCallback(join_channel, request['channel'])
 
     @in_channel_required
+    def do_exit(self):
+        self.exit_channel()
+
+    @in_channel_required
     def do_publish(self, request):
-        def publish_to_client(channel, message_):
-            self.factory.redis_session.publish(channel, bson.dumps(message_))
+        def publish_to_client(channel_name, message_):
+            self.factory.redis_session.publish(channel_name, bson.dumps(message_))
 
         def write_to_sqs(result, message_):
             self.factory.queue.write(QueueMessage(body=json.dumps(message_)))
@@ -120,20 +124,24 @@ class ChatProtocol(DnaProtocol):
             writer=self.user.id,
             published_at=time.time(),
             method=u'publish',
-            channel=self.channel
+            channel=self.channel.name
         )
-        d = deferToThread(publish_to_client, self.channel, message)
+        d = deferToThread(publish_to_client, self.channel.name, message)
         d.addCallback(write_to_sqs, message)
+
+    def exit_channel(self):
+        if not self.user:
+            return
+        if not self.channel:
+            return
+
+        self.channel.save()
+        self.factory.channels[self.channel.name].remove(self)
+        self.channel = None
 
     def connectionLost(self, reason=None):
         print reason
-        if self.user:
-            if self.channel:
-                self.factory.channels[self.channel].remove(self)
-            for channel in self.user.channels:
-                if channel.name in self.last_read_at:
-                    channel.last_read_at = self.last_read_at.pop(channel.name)['last_read_at']
-                    channel.save()
+        self.exit_channel()
 
 
 class ChatFactory(Factory):

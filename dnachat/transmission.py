@@ -1,8 +1,6 @@
 # -*-coding:utf8-*-
 from threading import Thread
 import bson
-from twisted.internet.threads import deferToThread
-from dnachat.models import Channel
 
 
 class Transmitter(Thread):
@@ -18,12 +16,4 @@ class Transmitter(Thread):
             data = bson.loads(message['data'])
             for client in self.factory.channels[message['channel']]:
                 client.transport.write(message['data'])
-                client.last_read_at[message['channel']] = data['published_at']
-
-    def mark_read(self, channel_name, published_at):
-        for client in self.factory.channels[channel_name]:
-            for channel in Channel.channels_of(client.user.id):
-                if channel.name == channel_name:
-                    channel.last_read_at = published_at
-                    channel.save()
-                    break
+                client.channel.last_read_at = data['published_at']
