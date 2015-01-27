@@ -71,7 +71,16 @@ class ChatProtocol(DnaProtocol):
     @auth_required
     def do_unread(self, request):
         messages = []
-        for channel in self.user.channels:
+        channels = self.user.channels
+        if 'channel' in request:
+            channels = [
+                channel
+                for channel in self.user.channels
+                if channel.name == request['channel']
+            ]
+            if not channels:
+                raise ProtocolError('Not a valid channel')
+        for channel in channels:
             messages += [
                 message.to_dict()
                 for message in DnaMessage.query(
