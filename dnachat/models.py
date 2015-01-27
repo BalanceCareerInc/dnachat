@@ -27,11 +27,11 @@ class Channel(Model):
 
     @classmethod
     def users_of(cls, channel_name):
-        return cls.query('ChannelIndex', name__eq=channel_name)
+        return cls.query('ChannelIndex', name__eq=str(channel_name))
 
     @classmethod
     def channels_of(cls, user_id):
-        return cls.query('UserIndex', user_id__eq=user_id)
+        return cls.query('UserIndex', user_id__eq=str(user_id))
 
     @classmethod
     def create_channel(cls, user_ids):
