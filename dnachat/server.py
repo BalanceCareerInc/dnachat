@@ -116,7 +116,7 @@ class ChatProtocol(DnaProtocol):
         d.addCallback(join_channel, request['channel'])
 
     @in_channel_required
-    def do_exit(self):
+    def do_exit(self, request):
         self.exit_channel()
 
     @in_channel_required
