@@ -40,7 +40,7 @@ class ChatProtocol(DnaProtocol):
         self.user.channels = list(Channel.channels_of(self.user.id))
         if not self.user:
             raise ProtocolError('Authentication failed')
-        self.transport.write(bson.dumps(dict(method=u'authenticate', status='OK')))
+        self.transport.write(bson.dumps(dict(method=u'authenticate', status=u'OK')))
 
     @auth_required
     def do_create(self, request):
@@ -126,6 +126,9 @@ class ChatProtocol(DnaProtocol):
 
         def write_to_sqs(result, message_):
             self.factory.queue.write(QueueMessage(body=json.dumps(message_)))
+
+        if not request['message'].strip():
+            raise ProtocolError('Blank message is not accepted')
 
         message = dict(
             message=request['message'],
