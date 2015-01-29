@@ -14,6 +14,7 @@ from twisted.internet.threads import deferToThread
 
 from .decorators import in_channel_required, auth_required
 from .dna.protocol import DnaProtocol, ProtocolError
+from .logger import logger
 from .transmission import Transmitter
 from .settings import conf
 from .models import Message as DnaMessage, Channel
@@ -150,7 +151,7 @@ class BaseChatProtocol(DnaProtocol):
         self.channel = None
 
     def connectionLost(self, reason=None):
-        print reason
+        logger.info('Connection Lost : %s' % reason)
         self.exit_channel()
 
     def authenticate(self, request):

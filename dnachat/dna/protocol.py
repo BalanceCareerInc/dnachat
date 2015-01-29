@@ -2,13 +2,16 @@
 from twisted.internet.protocol import Protocol
 
 from .request import Request
-from dnachat.dna.exceptions import ProtocolError
+from .exceptions import ProtocolError
+from ..logger import logger
 
 
 class DnaProtocol(Protocol):
     def dataReceived(self, raw_bson):
         try:
-            self.requestReceived(Request.from_bson(raw_bson))
+            request = Request.from_bson(raw_bson)
+            logger.info('"%s" Received' % request.method)
+            self.requestReceived(request)
         except ProtocolError, e:
-            print e
+            logger.error('ProtocolError: %s' % str(e), exc_info=True)
             self.transport.loseConnection()

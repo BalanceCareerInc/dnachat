@@ -1,7 +1,8 @@
 # -*-coding:utf8-*-
 import bson
 
-from dnachat.dna.exceptions import ProtocolError
+from .exceptions import ProtocolError
+from ..logger import logger
 
 
 class Request(object):
@@ -16,7 +17,7 @@ class Request(object):
         try:
             return self._data[key]
         except KeyError:
-            raise ProtocolError
+            raise ProtocolError('Parameter %s is omitted' % key)
 
     def get(self, key, default=None):
         if key in self._data:
@@ -29,6 +30,8 @@ class Request(object):
             data = bson.loads(raw_bson)
         except Exception:
             raise ProtocolError('Error on parsing bson')
+
+        logger.debug('Received: %s' % str(data))
 
         method = data.pop('method', None)
         if method is None:

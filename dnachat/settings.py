@@ -1,4 +1,7 @@
 # -*-coding: utf8-*-
+import logging
+import logger
+
 __all__ = 'conf'
 
 
@@ -6,6 +9,10 @@ class Settings(object):
     def __init__(self):
         self.config = dict(
             NOTIFICATION_QUEUE_NAME='NotificationQueue',
+            LOG_LEVEL=logging.INFO,
+            CHAT_LOG_FILE_NAME='chat.log',
+            LOGGER_LOG_FILE_NAME='logger.log',
+            NOTISENDER_LOG_FILE_NAME='notisender.log',
         )
         self.must_have_items = ('PROTOCOL',)
 

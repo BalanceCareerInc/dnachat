@@ -2,7 +2,8 @@
 import bson
 from redis import StrictRedis
 
-from dnachat.models import Message
+from .models import Message
+from .logger import logger
 
 
 class ChatLogger(object):
@@ -15,4 +16,8 @@ class ChatLogger(object):
         pubsub.listen().next()
         for message in pubsub.listen():
             data = bson.loads(message['data'])
-            print Message.put_item(**data)
+            logger.debug(data)
+            try:
+                Message.put_item(**data)
+            except Exception, e:
+                logger.error('Error on save message', exc_info=True)

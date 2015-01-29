@@ -4,9 +4,10 @@ import json
 
 from boto import sqs, sns
 
-from .settings import conf
+from .logger import logger
 from .models import Channel
 from .server import BaseChatProtocol
+from .settings import conf
 
 
 class NotificationSender(object):
@@ -33,7 +34,7 @@ class NotificationSender(object):
             while True:
                 queue_message = (yield)
                 message = json.loads(queue_message.get_body())
-                print message
+                logger.debug('Received: %s' % message)
                 channel = message.pop('channel')
                 message['gcm_type'] = 'chat'
                 gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
@@ -42,13 +43,13 @@ class NotificationSender(object):
                     if joiner.user_id == message['writer']:
                         continue
                     try:
-                        print '\t%s' % str(self.sns_conn.publish(
+                        logger.debug('\t%s' % str(self.sns_conn.publish(
                             message=json.dumps(data, ensure_ascii=False),
                             target_arn=BaseChatProtocol.get_user_by_id(joiner.user_id).endpoint_arn,
                             message_structure='json'
-                        ))
-                    except boto.exception.BotoServerError:
-                        pass  # TODO: Error handling
+                        )))
+                    except boto.exception.BotoServerError, e:
+                        logger.error('BotoError', exc_info=True)
                 self.queue.delete_message(queue_message)
         except GeneratorExit:
             pass
