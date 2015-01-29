@@ -126,10 +126,10 @@ class BaseChatProtocol(DnaProtocol):
         def write_to_sqs(result, message_):
             self.factory.queue.write(QueueMessage(body=json.dumps(message_)))
 
-        if not request['message'].strip():
-            raise ProtocolError('Blank message is not accepted')
+        self.ensure_valid_message(request)
 
         message = dict(
+            type=request['type'],
             message=request['message'],
             writer=self.user.id,
             published_at=time.time(),
@@ -160,6 +160,10 @@ class BaseChatProtocol(DnaProtocol):
         :return: A user object that has property "id". If failed, returns None
         """
         raise NotImplementedError
+
+    def ensure_valid_message(self, request):
+        if not request['message'].strip():
+            raise ProtocolError('Blank message is not accepted')
 
     @staticmethod
     def get_user_by_id(user_id):

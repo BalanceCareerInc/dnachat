@@ -35,7 +35,7 @@ class NotificationSender(object):
                 message = json.loads(queue_message.get_body())
                 print message
                 channel = message.pop('channel')
-                message['type'] = 'chat'
+                message['gcm_type'] = 'chat'
                 gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
                 data = dict(default='default message', GCM=gcm_json)
                 for joiner in Channel.users_of(channel):
