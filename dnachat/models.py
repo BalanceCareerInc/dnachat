@@ -50,13 +50,13 @@ class Message(Model):
     channel = StringAttribute(hash_key=True)
     published_at = NumberAttribute(range_key=True)
     type = StringAttribute()
-    user = StringAttribute()
+    writer = StringAttribute()
     message = StringAttribute()
 
     def to_dict(self):
         return dict(
             type=self.type,
-            writer=self.user,
+            writer=self.writer,
             published_at=float(self.published_at),
             message=self.message,
             channel=self.channel

@@ -15,10 +15,4 @@ class ChatLogger(object):
         pubsub.listen().next()
         for message in pubsub.listen():
             data = bson.loads(message['data'])
-            print Message.put_item(
-                type=message['type'],
-                channel=message['channel'],
-                user=data['writer'],
-                published_at=data['published_at'],
-                message=data['message']
-            )
+            print Message.put_item(**data)
