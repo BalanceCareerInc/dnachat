@@ -3,10 +3,10 @@ import boto
 import json
 
 from boto import sqs, sns
-from dnachat.models import Channel
 
 from .settings import conf
-from .adapter import get_user_by_id
+from .models import Channel
+from .server import BaseChatProtocol
 
 
 class NotificationSender(object):
@@ -44,7 +44,7 @@ class NotificationSender(object):
                     try:
                         print '\t%s' % str(self.sns_conn.publish(
                             message=json.dumps(data, ensure_ascii=False),
-                            target_arn=get_user_by_id(joiner.user_id).endpoint_arn,
+                            target_arn=BaseChatProtocol.get_user_by_id(joiner.user_id).endpoint_arn,
                             message_structure='json'
                         ))
                     except boto.exception.BotoServerError:

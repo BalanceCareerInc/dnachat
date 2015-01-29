@@ -7,10 +7,7 @@ class Settings(object):
         self.config = dict(
             NOTIFICATION_QUEUE_NAME='NotificationQueue',
         )
-        self.must_have_items = (
-            'AUTHENTICATOR',  # receives request, returns User object
-            'USER_RESOLVER',  # receives user id, returns User object
-        )
+        self.must_have_items = ('PROTOCOL',)
 
     def values(self):
         return self.config.values()
@@ -39,9 +36,6 @@ class Settings(object):
         self.patch_all()
 
     def patch_all(self):
-        import adapter
-        adapter.authenticate = self._func_from_package_name(self.config['AUTHENTICATOR'])
-        adapter.get_user_by_id = self._func_from_package_name(self.config['USER_RESOLVER'])
         if 'CHANNEL_MODEL' in self.config:
             import models
             models.Channel = self._func_from_package_name(self.config['CHANNEL_MODEL'])

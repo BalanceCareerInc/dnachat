@@ -2,25 +2,24 @@
 
 import bson
 import json
-from bynamodb.exceptions import ItemNotFoundException
 import redis
 import threading
 import time
 
 from boto import sqs
 from boto.sqs.message import Message as QueueMessage
+from bynamodb.exceptions import ItemNotFoundException
 from twisted.internet.protocol import Factory
 from twisted.internet.threads import deferToThread
 
 from .decorators import in_channel_required, auth_required
 from .dna.protocol import DnaProtocol, ProtocolError
-from .adapter import authenticate
 from .transmission import Transmitter
 from .settings import conf
 from .models import Message as DnaMessage, Channel
 
 
-class ChatProtocol(DnaProtocol):
+class BaseChatProtocol(DnaProtocol):
     def __init__(self):
         self.user = None
         self.channel = None
@@ -35,7 +34,7 @@ class ChatProtocol(DnaProtocol):
         processor(request)
 
     def do_authenticate(self, request):
-        self.user = authenticate(request)
+        self.user = self.authenticate(request)
         self.user.id = str(self.user.id).decode('utf8')
         self.user.channels = list(Channel.channels_of(self.user.id))
         if not self.user:
@@ -154,12 +153,29 @@ class ChatProtocol(DnaProtocol):
         print reason
         self.exit_channel()
 
+    def authenticate(self, request):
+        """
+        Authenticate this connection and return a User
+        :param request: dnachat.dna.request.Request object
+        :return: A user object that has property "id". If failed, returns None
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def get_user_by_id(user_id):
+        """
+        Return a user by user_id
+        :param user_id: id of user
+        :return: A user object
+        """
+        raise NotImplementedError
+
 
 class ChatFactory(Factory):
-    protocol = ChatProtocol
-    channels = dict()
 
     def __init__(self, redis_host='localhost'):
+        self.protocol = conf['PROTOCOL']
+        self.channels = dict()
         self.redis_session = redis.StrictRedis(host=redis_host)
         self.queue = sqs.connect_to_region('ap-northeast-1').get_queue(conf['NOTIFICATION_QUEUE_NAME'])
         Transmitter(self).start()
