@@ -1,6 +1,5 @@
 # -*-coding:utf8-*-
 from threading import Thread
-import bson
 
 
 class Transmitter(Thread):
@@ -13,7 +12,5 @@ class Transmitter(Thread):
         pubsub.psubscribe('*')
         pubsub.listen().next()
         for message in pubsub.listen():
-            data = bson.loads(message['data'])
-            for client in self.factory.channels[message['channel']]:
+            for client in self.factory.channels.get(message['channel'], []):
                 client.transport.write(message['data'])
-                client.channel.last_read_at = data['published_at']

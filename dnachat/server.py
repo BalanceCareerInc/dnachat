@@ -69,6 +69,28 @@ class BaseChatProtocol(DnaProtocol):
         d.addCallback(send_channel)
 
     @auth_required
+    def do_ack(self, request):
+        def publish_to_client(channel_name_, message_):
+            self.factory.redis_session.publish(channel_name_, bson.dumps(message_))
+
+        def refresh_last_read_at(last_messages):
+            for channel in self.user.channels:
+                if channel.name in last_messages:
+                    channel.last_read_at = last_messages[channel.name]
+                    channel.save()
+
+        for channel_name, published_at in request['last_messages'].iteritems():
+            message = dict(
+                sender=self.user.id,
+                published_at=published_at,
+                method=u'ack',
+                channel=channel_name
+            )
+            deferToThread(publish_to_client, channel_name, message)
+
+        deferToThread(refresh_last_read_at, request['last_messages'])
+
+    @auth_required
     def do_unread(self, request):
         def save_last_read_at(channel_, last_read_at):
             channel_.last_read_at = last_read_at
@@ -121,7 +143,11 @@ class BaseChatProtocol(DnaProtocol):
 
     @in_channel_required
     def do_publish(self, request):
-        def publish_to_client(channel_name, message_):
+        def refresh_last_read_at(published_at):
+            self.channel.last_read_at = published_at
+            self.channel.save()
+
+        def publish_to_client(result, channel_name, message_):
             self.factory.redis_session.publish(channel_name, bson.dumps(message_))
 
         def write_to_sqs(result, message_):
@@ -137,7 +163,8 @@ class BaseChatProtocol(DnaProtocol):
             method=u'publish',
             channel=self.channel.name
         )
-        d = deferToThread(publish_to_client, self.channel.name, message)
+        d = deferToThread(refresh_last_read_at, message['published_at'])
+        d.addCallback(publish_to_client, self.channel.name, message)
         d.addCallback(write_to_sqs, message)
 
     def exit_channel(self):
@@ -146,7 +173,6 @@ class BaseChatProtocol(DnaProtocol):
         if not self.channel:
             return
 
-        self.channel.save()
         self.factory.channels[self.channel.name].remove(self)
         self.channel = None
 

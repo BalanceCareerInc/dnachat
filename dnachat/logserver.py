@@ -16,6 +16,8 @@ class ChatLogger(object):
         pubsub.listen().next()
         for message in pubsub.listen():
             data = bson.loads(message['data'])
+            if data['method'] == 'ack':
+                continue
             logger.debug(data)
             try:
                 Message.put_item(**data)
