@@ -73,27 +73,27 @@ class BaseChatProtocol(DnaProtocol):
         def publish_to_client(channel_name_, message_):
             self.factory.redis_session.publish(channel_name_, bson.dumps(message_))
 
-        def refresh_last_read_at(last_messages):
+        def refresh_last_read_at(channel_name, published_at):
             for channel in self.user.channels:
-                if channel.name in last_messages:
-                    channel.last_read_at = last_messages[channel.name]
-                    channel.save()
+                if channel.name != channel_name:
+                    continue
+                channel.last_read_at = published_at
+                channel.save()
+                break
 
-        for channel_name, published_at in request['last_messages'].iteritems():
-            message = dict(
-                sender=self.user.id,
-                published_at=published_at,
-                method=u'ack',
-                channel=channel_name
-            )
-            deferToThread(publish_to_client, channel_name, message)
-
-        deferToThread(refresh_last_read_at, request['last_messages'])
+        message = dict(
+            sender=self.user.id,
+            published_at=request['published_at'],
+            method=u'ack',
+            channel=request['channel']
+        )
+        deferToThread(publish_to_client, request['channel'], message)
+        deferToThread(refresh_last_read_at, request['channel'], request['published_at'])
 
     @auth_required
     def do_unread(self, request):
-        def save_last_read_at(channel_, last_read_at):
-            channel_.last_read_at = last_read_at
+        def save_last_read_at(channel_):
+            channel_.last_sent_at = time.time()
             channel_.save()
 
         messages = []
@@ -111,11 +111,11 @@ class BaseChatProtocol(DnaProtocol):
                 message.to_dict()
                 for message in DnaMessage.query(
                     channel__eq=channel.name,
-                    published_at__gt=channel.last_read_at
+                    published_at__gt=channel.last_sent_at
                 )
             ]
             if new_messages:
-                deferToThread(save_last_read_at, channel, new_messages[-1]['published_at'])
+                deferToThread(save_last_read_at, channel)
                 messages += new_messages
 
         self.transport.write(bson.dumps(dict(method=u'unread', messages=messages)))
@@ -173,6 +173,7 @@ class BaseChatProtocol(DnaProtocol):
         if not self.channel:
             return
 
+        self.channel.save()
         self.factory.channels[self.channel.name].remove(self)
         self.channel = None
 

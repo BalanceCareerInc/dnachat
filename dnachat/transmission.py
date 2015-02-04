@@ -1,5 +1,6 @@
 # -*-coding:utf8-*-
 from threading import Thread
+import time
 
 
 class Transmitter(Thread):
@@ -14,3 +15,4 @@ class Transmitter(Thread):
         for message in pubsub.listen():
             for client in self.factory.channels.get(message['channel'], []):
                 client.transport.write(message['data'])
+                client.channel.last_sent_at = time.time()
