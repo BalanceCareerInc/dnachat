@@ -6,7 +6,6 @@ from boto import sqs, sns
 
 from .logger import logger
 from .models import Channel
-from .server import BaseChatProtocol
 from .settings import conf
 
 
@@ -35,20 +34,20 @@ class NotificationSender(object):
                 queue_message = (yield)
                 message = json.loads(queue_message.get_body())
                 logger.debug('Received: %s' % message)
-                channel = message.pop('channel')
                 message['gcm_type'] = 'chat'
                 gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
                 data = dict(default='default message', GCM=gcm_json)
-                for joiner in Channel.users_of(channel):
+                for joiner in Channel.users_of(message['channel']):
                     if joiner.user_id == message['writer']:
                         continue
                     try:
                         logger.debug('\t%s' % str(self.sns_conn.publish(
                             message=json.dumps(data, ensure_ascii=False),
-                            target_arn=BaseChatProtocol.get_user_by_id(joiner.user_id).endpoint_arn,
+                            target_arn=conf['PROTOCOL'].get_user_by_id(joiner.user_id).endpoint_arn,
                             message_structure='json'
                         )))
                     except boto.exception.BotoServerError, e:
+                        print e
                         logger.error('BotoError', exc_info=True)
                 self.queue.delete_message(queue_message)
         except GeneratorExit:
