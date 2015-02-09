@@ -58,6 +58,11 @@ class BaseChatProtocol(DnaProtocol):
             return my_channel.name
 
         def send_channel(channel):
+            if type(channel) is str:
+                channel = unicode(channel)
+            if type(request['partner_id']) is str:
+                request['partner_id'] = unicode(request['partner_id'])
+
             self.transport.write(bson.dumps(dict(
                 method=u'create',
                 channel=channel,
