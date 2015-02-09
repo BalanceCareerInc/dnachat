@@ -137,7 +137,12 @@ class BaseChatProtocol(DnaProtocol):
         def join_channel(result, channel_name):
             self.channel = [channel for channel in self.user.channels
                             if channel.name == channel_name][0]
-            self.factory.channels.setdefault(channel_name, []).append(self)
+            clients = [
+                client
+                for client in self.factory.channels.get(channel_name, [])
+                if client.user.id != self.user.id
+            ] + [self]
+            self.factory.channels[channel_name] = clients
 
         d = deferToThread(check_is_able_to_join, request['channel'])
         d.addCallback(join_channel, request['channel'])
