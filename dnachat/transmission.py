@@ -2,6 +2,8 @@
 from threading import Thread
 import time
 
+from .logger import logger
+
 
 class Transmitter(Thread):
     def __init__(self, factory):
@@ -14,5 +16,8 @@ class Transmitter(Thread):
         pubsub.listen().next()
         for message in pubsub.listen():
             for client in self.factory.channels.get(message['channel'], []):
-                client.transport.write(message['data'])
-                client.channel.last_sent_at = time.time()
+                try:
+                    client.transport.write(message['data'])
+                    client.channel.last_sent_at = time.time()
+                except Exception, e:
+                    logger.error('TransmissionError: %s' % str(e), exc_info=True)
