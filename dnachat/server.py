@@ -171,7 +171,7 @@ class BaseChatProtocol(DnaProtocol):
             writer=self.user.id,
             published_at=time.time(),
             method=u'publish',
-            channel=self.channel.name
+            channel=unicode(self.channel.name)
         )
         d = deferToThread(refresh_last_read_at, message['published_at'])
         d.addCallback(publish_to_client, self.channel.name, message)
