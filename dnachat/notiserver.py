@@ -23,7 +23,7 @@ class NotificationSender(object):
         task = self.publish()
         task.next()
         while True:
-            queue_message = self.queue.read()
+            queue_message = self.queue.read(wait_time_seconds=5)
             if not queue_message:
                 continue
             task.send(queue_message)
