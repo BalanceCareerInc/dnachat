@@ -144,8 +144,14 @@ class BaseChatProtocol(DnaProtocol):
             ] + [self]
             self.factory.channels[channel_name] = clients
 
+        def send_last_read(result, channel):
+            for joiner in Channel.users_of(channel):
+                if joiner.user_id != self.user.id:
+                    self.transport.write(bson.dumps(dict(method=u'join', channel=joiner.name, last_read=joiner.last_read_at)))
+
         d = deferToThread(check_is_able_to_join, request['channel'])
         d.addCallback(join_channel, request['channel'])
+        d.addCallback(send_last_read, request['channel'])
 
     @in_channel_required
     def do_exit(self, request):
