@@ -15,7 +15,9 @@ setup(name='dnachat',
       install_requires=[
           'bson>=0.3.3',
           'twisted',
-          'redis'
+          'redis',
+          'boto',
+          'bynamodb'
       ],
       entry_points={
           'console_scripts': [
