@@ -22,6 +22,9 @@ class Settings(object):
     def keys(self):
         return self.config.keys()
 
+    def __contains__(self, item):
+        return item in self.config
+
     def __getitem__(self, key):
         return self.config[key]
 
