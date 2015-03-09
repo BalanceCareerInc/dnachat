@@ -57,21 +57,28 @@ class BaseChatProtocol(DnaProtocol):
             self.user.channels.append(my_channel)
             return my_channel.name
 
-        def send_channel(channel):
+        def send_channel(channel, partner_ids):
             if type(channel) is str:
                 channel = unicode(channel)
             if type(request['partner_id']) is str:
                 request['partner_id'] = unicode(request['partner_id'])
 
-            self.transport.write(bson.dumps(dict(
-                method=u'create',
-                channel=channel,
-                partner_id=request['partner_id']
-            )))
+            response = dict(method=u'create', channel=channel)
+            if len(partner_ids) == 1:
+                response['partner_id'] = partner_ids[0]
+            else:
+                response['partner_ids'] = partner_ids
 
-        d = deferToThread(get_from_exists_channels, self.user.channels, request['partner_id'])
-        d.addErrback(create_channel, (self.user.id, request['partner_id']))
-        d.addCallback(send_channel)
+            self.transport.write(bson.dumps(response))
+
+        if 'partner_id' in request:
+            d = deferToThread(get_from_exists_channels, self.user.channels, request['partner_id'])
+            chat_members = [self.user.id, request['partner_id']]
+            d.addErrback(create_channel, chat_members)
+        else:
+            chat_members = [self.user.id] + request['partner_ids']
+            d = deferToThread(create_channel, chat_members)
+        d.addCallback(send_channel, [m for m in chat_members if m != self.user.id])
 
     @auth_required
     def do_ack(self, request):
