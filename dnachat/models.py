@@ -4,35 +4,27 @@ from bynamodb.indexes import GlobalAllIndex
 from bynamodb.model import Model
 
 
-class Channel(Model):
-    key = StringAttribute(hash_key=True)
-    name = StringAttribute()
-    user_id = StringAttribute()
-    last_sent_at = NumberAttribute(default=0.0)
-    last_read_at = NumberAttribute(default=0.0)
+class ChannelUser(Model):
+    channel_name = StringAttribute(hash_key=True)
+    user_id = StringAttribute(range_key=True)
 
     class UserIndex(GlobalAllIndex):
         hash_key = 'user_id'
-
-        read_throughput = 1
-        write_throughput = 1
-
-    class ChannelIndex(GlobalAllIndex):
-        hash_key = 'name'
-
-        read_throughput = 1
-        write_throughput = 1
-
-    def to_dict(self):
-        return dict(key=self.key, name=self.name, last_read_at=self.last_read_at)
+        range_key = 'channel_name'
 
     @classmethod
     def users_of(cls, channel_name):
-        return cls.query('ChannelIndex', name__eq=str(channel_name))
+        return cls.query(channel_name__eq=str(channel_name))
 
     @classmethod
     def channels_of(cls, user_id):
         return cls.query('UserIndex', user_id__eq=str(user_id))
+
+
+class Channel(Model):
+    name = StringAttribute(hash_key=True)
+    last_sent_at = NumberAttribute(default=0.0)
+    last_read_at = NumberAttribute(default=0.0)
 
     @classmethod
     def create_channel(cls, user_ids):

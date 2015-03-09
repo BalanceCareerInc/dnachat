@@ -1,0 +1,194 @@
+2015-03-09 14:36:05,575:INFO - "authenticate" Received
+2015-03-09 14:36:49,941:INFO - "authenticate" Received
+2015-03-09 14:37:09,600:INFO - "authenticate" Received
+2015-03-09 14:46:59,382:INFO - "authenticate" Received
+2015-03-09 14:46:59,918:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'boto.exception.JSONResponseError'>: JSONResponseError: 400 Bad Request
+{u'Message': u'Cannot do operations on a non-existent table', u'__type': u'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException'}
+]
+2015-03-09 14:49:27,348:INFO - "authenticate" Received
+2015-03-09 14:49:27,809:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'boto.exception.JSONResponseError'>: JSONResponseError: 400 Bad Request
+{u'Message': u'Cannot do operations on a non-existent table', u'__type': u'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException'}
+]
+2015-03-09 14:49:39,276:INFO - "authenticate" Received
+2015-03-09 14:49:39,758:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'boto.exception.JSONResponseError'>: JSONResponseError: 400 Bad Request
+{u'Message': u'Cannot do operations on a non-existent table', u'__type': u'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException'}
+]
+2015-03-09 14:50:08,261:INFO - "authenticate" Received
+2015-03-09 14:50:08,700:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'boto.exception.JSONResponseError'>: JSONResponseError: 400 Bad Request
+{u'Message': u'Cannot do operations on a non-existent table', u'__type': u'com.amazonaws.dynamodb.v20120810#ResourceNotFoundException'}
+]
+2015-03-09 14:57:07,032:INFO - "authenticate" Received
+2015-03-09 14:57:07,125:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 14:57:39,808:INFO - "authenticate" Received
+2015-03-09 14:57:39,888:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 14:57:59,798:INFO - "authenticate" Received
+2015-03-09 14:57:59,881:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:05:08,237:INFO - "authenticate" Received
+2015-03-09 15:05:08,331:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:05:40,819:INFO - "authenticate" Received
+2015-03-09 15:05:40,886:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:06:52,323:INFO - "authenticate" Received
+2015-03-09 15:06:52,389:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:08:57,875:INFO - "authenticate" Received
+2015-03-09 15:08:57,948:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:09:14,234:INFO - "authenticate" Received
+2015-03-09 15:09:14,291:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:09:40,687:INFO - "authenticate" Received
+2015-03-09 15:09:40,776:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:11:36,082:INFO - "authenticate" Received
+2015-03-09 15:11:36,157:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:12:07,783:INFO - "authenticate" Received
+2015-03-09 15:12:07,859:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:17:09,553:INFO - "authenticate" Received
+2015-03-09 15:17:09,631:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:17:09,633:INFO - "authenticate" Received
+2015-03-09 15:17:09,665:INFO - "create" Received
+2015-03-09 15:20:05,463:INFO - "authenticate" Received
+2015-03-09 15:20:05,548:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:20:05,550:INFO - "authenticate" Received
+2015-03-09 15:20:05,575:INFO - "create" Received
+2015-03-09 15:20:30,596:INFO - "authenticate" Received
+2015-03-09 15:20:30,650:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:20:30,651:INFO - "authenticate" Received
+2015-03-09 15:20:30,682:INFO - "create" Received
+2015-03-09 15:20:51,274:INFO - "authenticate" Received
+2015-03-09 15:20:51,352:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:20:54,285:INFO - "authenticate" Received
+2015-03-09 15:20:55,464:INFO - "create" Received
+2015-03-09 15:21:17,119:INFO - "authenticate" Received
+2015-03-09 15:21:17,208:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:21:18,848:INFO - "authenticate" Received
+2015-03-09 15:21:18,884:INFO - "create" Received
+2015-03-09 15:22:56,108:INFO - "authenticate" Received
+2015-03-09 15:22:56,207:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:22:56,216:INFO - "authenticate" Received
+2015-03-09 15:22:56,242:INFO - "create" Received
+2015-03-09 15:23:05,036:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:31:42,665:INFO - "authenticate" Received
+2015-03-09 15:31:42,726:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:31:42,727:INFO - "authenticate" Received
+2015-03-09 15:31:42,747:INFO - "create" Received
+2015-03-09 15:31:42,904:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:32:08,594:INFO - "authenticate" Received
+2015-03-09 15:32:08,679:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:32:08,681:INFO - "authenticate" Received
+2015-03-09 15:32:08,707:INFO - "create" Received
+2015-03-09 15:32:08,909:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:32:37,970:INFO - "authenticate" Received
+2015-03-09 15:32:38,053:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:32:38,056:INFO - "authenticate" Received
+2015-03-09 15:32:38,085:INFO - "create" Received
+2015-03-09 15:32:38,252:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:32:58,353:INFO - "authenticate" Received
+2015-03-09 15:32:58,408:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:32:58,410:INFO - "authenticate" Received
+2015-03-09 15:32:58,433:INFO - "create" Received
+2015-03-09 15:32:58,645:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:33:12,634:INFO - "authenticate" Received
+2015-03-09 15:33:12,707:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:33:12,709:INFO - "authenticate" Received
+2015-03-09 15:33:12,731:INFO - "create" Received
+2015-03-09 15:33:12,901:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:33:34,104:INFO - "authenticate" Received
+2015-03-09 15:33:34,189:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:33:34,192:INFO - "authenticate" Received
+2015-03-09 15:33:34,216:INFO - "create" Received
+2015-03-09 15:33:34,410:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:33:43,587:INFO - "authenticate" Received
+2015-03-09 15:33:43,665:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:33:43,668:INFO - "authenticate" Received
+2015-03-09 15:33:43,689:INFO - "create" Received
+2015-03-09 15:33:43,877:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:34:32,834:INFO - "authenticate" Received
+2015-03-09 15:34:32,925:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:34:32,927:INFO - "authenticate" Received
+2015-03-09 15:34:32,951:INFO - "create" Received
+2015-03-09 15:34:33,093:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:38:39,909:INFO - "authenticate" Received
+2015-03-09 15:38:39,997:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 15:38:40,000:INFO - "authenticate" Received
+2015-03-09 15:38:40,024:INFO - "create" Received
+2015-03-09 15:38:40,195:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 16:04:19,238:INFO - "authenticate" Received
+2015-03-09 16:04:19,322:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 16:04:19,324:INFO - "authenticate" Received
+2015-03-09 16:04:19,352:INFO - "create" Received
+2015-03-09 16:04:19,499:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 16:04:29,783:INFO - "authenticate" Received
+2015-03-09 16:04:29,859:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 16:04:29,862:INFO - "authenticate" Received
+2015-03-09 16:04:29,895:INFO - "create" Received
+2015-03-09 16:04:30,094:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 16:05:28,949:INFO - "authenticate" Received
+2015-03-09 16:05:29,023:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 16:05:29,026:INFO - "authenticate" Received
+2015-03-09 16:05:29,058:INFO - "create" Received
+2015-03-09 16:05:29,257:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 16:05:41,076:INFO - "authenticate" Received
+2015-03-09 16:05:41,158:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 16:05:41,161:INFO - "authenticate" Received
+2015-03-09 16:05:41,197:INFO - "create" Received
+2015-03-09 16:05:41,348:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 16:14:31,425:INFO - "authenticate" Received
+2015-03-09 16:14:31,526:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 16:14:31,529:INFO - "authenticate" Received
+2015-03-09 16:14:31,552:INFO - "create" Received
+2015-03-09 16:15:14,946:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+2015-03-09 16:15:25,105:INFO - "authenticate" Received
+2015-03-09 16:15:25,183:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 16:15:25,187:INFO - "authenticate" Received
+2015-03-09 16:15:25,217:INFO - "create" Received
+2015-03-09 16:16:04,420:INFO - "authenticate" Received
+2015-03-09 16:16:04,493:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+2015-03-09 16:16:04,495:INFO - "authenticate" Received
+2015-03-09 16:16:04,516:INFO - "create" Received
+2015-03-09 16:16:04,709:INFO - Connection Lost : [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
