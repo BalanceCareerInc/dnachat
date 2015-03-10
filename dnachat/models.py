@@ -1,5 +1,6 @@
+import hashlib
 from uuid import uuid1
-from bynamodb.attributes import StringAttribute, NumberAttribute
+from bynamodb.attributes import StringAttribute, NumberAttribute, BooleanAttribute
 from bynamodb.indexes import GlobalAllIndex
 from bynamodb.model import Model
 
@@ -10,6 +11,7 @@ class Channel(Model):
     user_id = StringAttribute()
     last_sent_at = NumberAttribute(default=0.0)
     last_read_at = NumberAttribute(default=0.0)
+    is_group_chat = BooleanAttribute(default=False)
 
     class UserIndex(GlobalAllIndex):
         hash_key = 'user_id'
@@ -35,14 +37,15 @@ class Channel(Model):
         return cls.query('UserIndex', user_id__eq=str(user_id))
 
     @classmethod
-    def create_channel(cls, user_ids):
-        channel_name = str(uuid1())
+    def create_channel(cls, user_ids, is_group_chat=False):
+        channel_name = hashlib.sha512(str(uuid1())).hexdigest()
         channels = []
         for user_id in user_ids:
             channels.append(cls.put_item(
-                key='%s_%s' % (channel_name, user_id),
+                key=str(uuid1()),
                 name=channel_name,
-                user_id=str(user_id)
+                user_id=str(user_id),
+                is_group_chat=is_group_chat
             ))
         return channels
 

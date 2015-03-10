@@ -134,31 +134,40 @@ class BaseChatProtocol(DnaProtocol):
 
     @auth_required
     def do_join(self, request):
-        def check_is_able_to_join(channel):
-            for joiner in Channel.users_of(channel):
-                if joiner.user_id == self.user.id:
-                    break
+        def check_is_able_to_join(channel_name):
+            for channel in Channel.users_of(channel_name):
+                if channel.user_id == self.user.id:
+                    return channel
             else:
                 raise ProtocolError('Channel is not exists')
 
-        def join_channel(result, channel_name):
-            self.channel = [channel for channel in self.user.channels
-                            if channel.name == channel_name][0]
+        def join_channel(channel):
+            self.channel = channel
             clients = [
                 client
-                for client in self.factory.channels.get(channel_name, [])
+                for client in self.factory.channels.get(channel.name, [])
                 if client.user.id != self.user.id
             ] + [self]
-            self.factory.channels[channel_name] = clients
+            self.factory.channels[channel.name] = clients
 
-        def send_last_read(result, channel):
-            for joiner in Channel.users_of(channel):
-                if joiner.user_id != self.user.id:
-                    self.transport.write(bson.dumps(dict(method=u'join', channel=joiner.name, last_read=joiner.last_read_at)))
+            others_channel = [
+                channel_ for channel_ in Channel.users_of(channel.name)
+                if channel_.user_id != self.user.id
+            ]
+
+            response = dict(method=u'join', channel=channel.name)
+            if channel.is_group_chat:
+                response['last_read'] = dict(
+                    (channel.user_id, channel.last_read_at)
+                    for channel in others_channel
+                )
+            else:
+                response['last_read'] = others_channel[0].last_read_at
+
+            self.transport.write(bson.dumps(response))
 
         d = deferToThread(check_is_able_to_join, request['channel'])
-        d.addCallback(join_channel, request['channel'])
-        d.addCallback(send_last_read, request['channel'])
+        d.addCallback(join_channel)
 
     @in_channel_required
     def do_exit(self, request):
