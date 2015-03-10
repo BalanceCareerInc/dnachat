@@ -2,3 +2,4 @@
 .venv
 *.pyc
 *.sw[po]
+*.db
