@@ -17,7 +17,8 @@ setup(name='dnachat',
           'twisted',
           'redis',
           'boto',
-          'bynamodb'
+          'bynamodb',
+          'pytest'
       ],
       entry_points={
           'console_scripts': [
