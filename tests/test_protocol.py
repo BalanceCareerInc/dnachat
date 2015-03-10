@@ -62,3 +62,32 @@ def test_join(channel1, user1):
     assert response['channel'] == channel1
     assert response['last_read'] == 0.0
     client_sock.close()
+
+
+def test_publish(channel1, user1, user2):
+    sock1 = socket(AF_INET, SOCK_STREAM)
+    sock1.connect(('localhost', config.PORT))
+    sock1.sendobj(dict(method='authenticate', id=user1))
+    sock1.recvobj()
+    sock1.sendobj(dict(method='join', channel=channel1))
+    sock1.recvobj()
+
+    sock2 = socket(AF_INET, SOCK_STREAM)
+    sock2.connect(('localhost', config.PORT))
+    sock2.sendobj(dict(method='authenticate', id=user2))
+    sock2.recvobj()
+    sock2.sendobj(dict(method='join', channel=channel1))
+    sock2.recvobj()
+
+    sock1.sendobj(dict(method='publish', message='Hi!', type='text'))
+    response1 = sock1.recvobj()
+    response2 = sock2.recvobj()
+
+    assert response1 == response2
+    assert response1['method'] == 'publish'
+    assert response1['writer'] == user1
+    assert response1['message'] == 'Hi!'
+
+    sock1.close()
+    sock2.close()
+

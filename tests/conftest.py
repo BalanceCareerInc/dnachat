@@ -69,3 +69,4 @@ def pytest_unconfigure():
     shutil.rmtree('tests/local_dynamodb/testdb', True)
     db_server.terminate()
     chat_server.terminate()
+    print 'Finished!!!!'
