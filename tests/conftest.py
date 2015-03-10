@@ -1,6 +1,5 @@
 # -*-coding:utf8-*-
 import os
-import pytest
 import shutil
 import subprocess
 import time
@@ -9,7 +8,6 @@ from threading import Thread
 from bynamodb.model import Model
 from bynamodb.patcher import patch_dynamodb_connection
 from twisted.internet import reactor
-from twisted.internet import task
 
 import config
 from dnachat.runner import run_dnachat
@@ -22,16 +20,7 @@ class ChatServerThread(Thread):
         self._stop = False
 
     def run(self):
-        lc = task.LoopingCall(self.check_stop_flag)
-        lc.start(2)
         run_dnachat('tests/config.py')
-
-    def check_stop_flag(self):
-        if self._stop:
-            reactor.stop()
-
-    def terminate(self):
-        self._stop = True
 
 
 chat_server = None
@@ -68,5 +57,4 @@ def pytest_configure():
 def pytest_unconfigure():
     shutil.rmtree('tests/local_dynamodb/testdb', True)
     db_server.terminate()
-    chat_server.terminate()
-    print 'Finished!!!!'
+    reactor.stop()
