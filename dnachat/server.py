@@ -59,7 +59,7 @@ class BaseChatProtocol(DnaProtocol):
             for join_info in [join_info for channel in channel_names
                               for join_info in ChannelJoinInfo.by_channel(channel)]:
                 if join_info.user_id == partner_id:
-                    return join_info.channel
+                    return Channel.get_item(join_info.channel)
             raise ItemNotFoundException
 
         def create_channel(err, user_ids, is_group_chat):
@@ -144,7 +144,7 @@ class BaseChatProtocol(DnaProtocol):
         if not channel.is_group_chat:
             raise ProtocolError('Not a group chat: %s' % request['channel'])
         partner_ids = [join_info.user_id for join_info in ChannelJoinInfo.by_channel(channel.name)]
-        self.publish_message('join', channel.name, '', self.user.id)
+        self.publish_message(u'join', channel.name, u'', self.user.id)
         ChannelJoinInfo.put_item(
             channel=channel.name,
             user_id=self.user.id,
@@ -174,7 +174,7 @@ class BaseChatProtocol(DnaProtocol):
                 if channel_.user_id != self.user.id
             ]
 
-            response = dict(method=u'attend', channel=join_info.channel)
+            response = dict(method=request['method'], channel=join_info.channel)
             if Channel.get_item(self.attended_channel_join_info.channel).is_group_chat:
                 response['last_read'] = dict(
                     (join_info.user_id, join_info.last_read_at)
@@ -210,9 +210,9 @@ class BaseChatProtocol(DnaProtocol):
             self.factory.queue.write(QueueMessage(body=json.dumps(message_)))
 
         message = dict(
-            type=unicode(type_),
+            type=type_,
             channel=unicode(channel),
-            message=unicode(message),
+            message=message,
             writer=writer,
             published_at=time.time(),
             method=u'publish',
