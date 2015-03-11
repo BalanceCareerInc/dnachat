@@ -18,6 +18,6 @@ class Transmitter(Thread):
             for client in self.factory.channels.get(message['channel'], []):
                 try:
                     client.transport.write(message['data'])
-                    client.channel.last_sent_at = time.time()
+                    client.attended_channel_join_info.last_sent_at = time.time()
                 except Exception, e:
                     logger.error('TransmissionError: %s' % str(e), exc_info=True)
