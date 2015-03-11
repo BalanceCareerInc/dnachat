@@ -144,6 +144,7 @@ class BaseChatProtocol(DnaProtocol):
         if not channel.is_group_chat:
             raise ProtocolError('Not a group chat: %s' % request['channel'])
         partner_ids = [join_info.user_id for join_info in ChannelJoinInfo.by_channel(channel.name)]
+        self.publish_message('join', channel.name, '', self.user.id)
         ChannelJoinInfo.put_item(
             channel=channel.name,
             user_id=self.user.id,
@@ -193,6 +194,11 @@ class BaseChatProtocol(DnaProtocol):
 
     @in_channel_required
     def do_publish(self, request):
+        self.ensure_valid_message(request)
+        self.publish_message(request['type'], self.attended_channel_join_info.channel, request['message'], self.user.id)
+
+    def publish_message(self, type_, channel, message, writer):
+
         def refresh_last_read_at(published_at):
             self.attended_channel_join_info.last_read_at = published_at
             self.attended_channel_join_info.save()
@@ -203,15 +209,13 @@ class BaseChatProtocol(DnaProtocol):
         def write_to_sqs(result, message_):
             self.factory.queue.write(QueueMessage(body=json.dumps(message_)))
 
-        self.ensure_valid_message(request)
-
         message = dict(
-            type=request['type'],
-            message=request['message'],
-            writer=self.user.id,
+            type=unicode(type_),
+            channel=unicode(channel),
+            message=unicode(message),
+            writer=writer,
             published_at=time.time(),
             method=u'publish',
-            channel=unicode(self.attended_channel_join_info.channel)
         )
         d = deferToThread(refresh_last_read_at, message['published_at'])
         d.addCallback(publish_to_client, self.attended_channel_join_info.channel, message)
