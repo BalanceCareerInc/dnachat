@@ -137,15 +137,15 @@ class BaseChatProtocol(DnaProtocol):
 
 
     @auth_required
-    def do_join(self, request):
-        def check_is_able_to_join(channel_name):
+    def do_attend(self, request):
+        def check_is_able_to_attend(channel_name):
             for join_info in ChannelJoinInfo.by_channel(channel_name):
                 if join_info.user_id == self.user.id:
                     return join_info
             else:
                 raise ProtocolError('Channel is not exists')
 
-        def join_channel(join_info):
+        def attend_channel(join_info):
             self.join_info = join_info
             clients = [
                 client
@@ -170,8 +170,8 @@ class BaseChatProtocol(DnaProtocol):
 
             self.transport.write(bson.dumps(response))
 
-        d = deferToThread(check_is_able_to_join, request['channel'])
-        d.addCallback(join_channel)
+        d = deferToThread(check_is_able_to_attend, request['channel'])
+        d.addCallback(attend_channel)
 
     @in_channel_required
     def do_exit(self, request):
