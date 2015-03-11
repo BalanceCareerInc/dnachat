@@ -5,28 +5,37 @@ from bynamodb.indexes import GlobalAllIndex
 from bynamodb.model import Model
 
 
-class Channel(Model):
-    key = StringAttribute(hash_key=True)
-    name = StringAttribute()
-    user_id = StringAttribute()
+class ChannelJoinInfo(Model):
+    channel = StringAttribute(hash_key=True)
+    user_id = StringAttribute(range_key=True)
     last_sent_at = NumberAttribute(default=0.0)
     last_read_at = NumberAttribute(default=0.0)
-    is_group_chat = BooleanAttribute(default=False)
 
     class UserIndex(GlobalAllIndex):
         hash_key = 'user_id'
+        range_key = 'channel'
 
         read_throughput = 1
         write_throughput = 1
 
     class ChannelIndex(GlobalAllIndex):
-        hash_key = 'name'
+        hash_key = 'channel'
 
         read_throughput = 1
         write_throughput = 1
 
-    def to_dict(self):
-        return dict(key=self.key, name=self.name, last_read_at=self.last_read_at)
+    @classmethod
+    def by_channel(cls, channel_name):
+        return cls.query('ChannelIndex', channel__eq=str(channel_name))
+
+    @classmethod
+    def by_user(cls, user_id):
+        return cls.query('UserIndex', user_id__eq=str(user_id))
+
+
+class Channel(Model):
+    name = StringAttribute(hash_key=True)
+    is_group_chat = BooleanAttribute(default=False)
 
     @classmethod
     def users_of(cls, channel_name):
@@ -38,16 +47,17 @@ class Channel(Model):
 
     @classmethod
     def create_channel(cls, user_ids, is_group_chat=False):
-        channel_name = hashlib.sha512(str(uuid1())).hexdigest()
-        channels = []
+        channel = cls.put_item(
+            name=hashlib.sha512(str(uuid1())).digest().encode('base64').strip(),
+            is_group_chat=is_group_chat
+        )
+        join_infos = []
         for user_id in user_ids:
-            channels.append(cls.put_item(
-                key=str(uuid1()),
-                name=channel_name,
+            join_infos.append(ChannelJoinInfo.put_item(
+                channel=channel.name,
                 user_id=str(user_id),
-                is_group_chat=is_group_chat
             ))
-        return channels
+        return channel, join_infos
 
 
 class Message(Model):

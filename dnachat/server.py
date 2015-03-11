@@ -17,13 +17,13 @@ from .dna.protocol import DnaProtocol, ProtocolError
 from .logger import logger
 from .transmission import Transmitter
 from .settings import conf
-from .models import Message as DnaMessage, Channel
+from .models import Message as DnaMessage, Channel, ChannelJoinInfo
 
 
 class BaseChatProtocol(DnaProtocol):
     def __init__(self):
         self.user = None
-        self.channel = None
+        self.join_info = None
         self.status = 'pending'
         self.pending_messages = []
         self.pending_messages_lock = threading.Lock()
@@ -37,48 +37,47 @@ class BaseChatProtocol(DnaProtocol):
     def do_authenticate(self, request):
         self.user = self.authenticate(request)
         self.user.id = str(self.user.id).decode('utf8')
-        self.user.channels = list(Channel.channels_of(self.user.id))
+        self.user.join_infos = list(ChannelJoinInfo.by_user(self.user.id))
         if not self.user:
             raise ProtocolError('Authentication failed')
         self.transport.write(bson.dumps(dict(method=u'authenticate', status=u'OK')))
 
     @auth_required
     def do_create(self, request):
-        def get_from_exists_channels(channels, partner_id):
-            for channel in channels:
-                for partner_channel in Channel.users_of(channel.name):
-                    if partner_channel.user_id == partner_id:
-                        return partner_channel.name
+        def main():
+            if 'partner_id' in request:
+                channel_names = [join_info.channel for join_info in self.user.join_infos]
+                d = deferToThread(get_from_exists_channels, channel_names, request['partner_id'])
+                chat_members = [self.user.id, request['partner_id']]
+                d.addErrback(create_channel, chat_members, False)
+            else:
+                chat_members = [self.user.id] + request['partner_ids']
+                d = deferToThread(create_channel, None, chat_members, True)
+            d.addCallback(send_channel, [m for m in chat_members if m != self.user.id])
+
+        def get_from_exists_channels(channel_names, partner_id):
+            for join_info in [join_info for channel in channel_names
+                              for join_info in ChannelJoinInfo.by_channel(channel)]:
+                if join_info.user_id == partner_id:
+                    return join_info.channel
             raise ItemNotFoundException
 
-        def create_channel(err, user_ids):
-            channels = Channel.create_channel(user_ids)
-            my_channel = [channel for channel in channels if channel.user_id == self.user.id][0]
-            self.user.channels.append(my_channel)
-            return my_channel.name
+        def create_channel(err, user_ids, is_group_chat):
+            channel, join_infos = Channel.create_channel(user_ids, is_group_chat)
+            my_join_info = [join_info for join_info in join_infos if join_info.user_id == self.user.id][0]
+            self.user.join_infos.append(my_join_info)
+            return channel
 
         def send_channel(channel, partner_ids):
-            if type(channel) is str:
-                channel = unicode(channel)
-            if type(request['partner_id']) is str:
-                request['partner_id'] = unicode(request['partner_id'])
-
-            response = dict(method=u'create', channel=channel)
-            if len(partner_ids) == 1:
-                response['partner_id'] = partner_ids[0]
-            else:
+            response = dict(method=u'create', channel=unicode(channel.name))
+            if channel.is_group_chat:
                 response['partner_ids'] = partner_ids
+            else:
+                response['partner_id'] = partner_ids[0]
 
             self.transport.write(bson.dumps(response))
 
-        if 'partner_id' in request:
-            d = deferToThread(get_from_exists_channels, self.user.channels, request['partner_id'])
-            chat_members = [self.user.id, request['partner_id']]
-            d.addErrback(create_channel, chat_members)
-        else:
-            chat_members = [self.user.id] + request['partner_ids']
-            d = deferToThread(create_channel, chat_members)
-        d.addCallback(send_channel, [m for m in chat_members if m != self.user.id])
+        main()
 
     @auth_required
     def do_ack(self, request):
@@ -86,11 +85,11 @@ class BaseChatProtocol(DnaProtocol):
             self.factory.redis_session.publish(channel_name_, bson.dumps(message_))
 
         def refresh_last_read_at(channel_name, published_at):
-            for channel in self.user.channels:
-                if channel.name != channel_name:
+            for join_info in self.user.join_infos:
+                if join_info.channel != channel_name:
                     continue
-                channel.last_read_at = published_at
-                channel.save()
+                join_info.last_read_at = published_at
+                join_info.save()
                 break
 
         message = dict(
@@ -104,65 +103,70 @@ class BaseChatProtocol(DnaProtocol):
 
     @auth_required
     def do_unread(self, request):
-        def save_last_read_at(channel_):
-            channel_.last_sent_at = time.time()
-            channel_.save()
+        def main():
+            messages = []
+            join_infos = self.user.join_infos
+            if 'channel' in request:
+                join_infos = [
+                    join_info
+                    for join_info in self.user.join_infos
+                    if join_info.channel == request['channel']
+                ]
+                if not join_infos:
+                    raise ProtocolError('Not a valid channel')
 
-        messages = []
-        channels = self.user.channels
-        if 'channel' in request:
-            channels = [
-                channel
-                for channel in self.user.channels
-                if channel.name == request['channel']
-            ]
-            if not channels:
-                raise ProtocolError('Not a valid channel')
-        for channel in channels:
-            new_messages = [
-                message.to_dict()
-                for message in DnaMessage.query(
-                    channel__eq=channel.name,
-                    published_at__gt=channel.last_sent_at
-                )
-            ]
-            if new_messages:
-                deferToThread(save_last_read_at, channel)
-                messages += new_messages
+            for join_info in join_infos:
+                new_messages = [
+                    message.to_dict()
+                    for message in DnaMessage.query(
+                        channel__eq=join_info.channel,
+                        published_at__gt=join_info.last_sent_at
+                    )
+                ]
+                if new_messages:
+                    deferToThread(save_last_read_at, join_info)
+                    messages += new_messages
 
-        self.transport.write(bson.dumps(dict(method=u'unread', messages=messages)))
+            self.transport.write(bson.dumps(dict(method=u'unread', messages=messages)))
+
+        def save_last_read_at(join_info):
+            join_info.last_sent_at = time.time()
+            join_info.save()
+
+        main()
+
 
     @auth_required
     def do_join(self, request):
         def check_is_able_to_join(channel_name):
-            for channel in Channel.users_of(channel_name):
-                if channel.user_id == self.user.id:
-                    return channel
+            for join_info in ChannelJoinInfo.by_channel(channel_name):
+                if join_info.user_id == self.user.id:
+                    return join_info
             else:
                 raise ProtocolError('Channel is not exists')
 
-        def join_channel(channel):
-            self.channel = channel
+        def join_channel(join_info):
+            self.join_info = join_info
             clients = [
                 client
-                for client in self.factory.channels.get(channel.name, [])
+                for client in self.factory.channels.get(join_info.channel, [])
                 if client.user.id != self.user.id
             ] + [self]
-            self.factory.channels[channel.name] = clients
+            self.factory.channels[join_info.channel] = clients
 
-            others_channel = [
-                channel_ for channel_ in Channel.users_of(channel.name)
+            others_join_infos = [
+                channel_ for channel_ in ChannelJoinInfo.by_channel(join_info.channel)
                 if channel_.user_id != self.user.id
             ]
 
-            response = dict(method=u'join', channel=channel.name)
-            if channel.is_group_chat:
+            response = dict(method=u'join', channel=join_info.channel)
+            if Channel.get_item(self.join_info.channel).is_group_chat:
                 response['last_read'] = dict(
-                    (channel.user_id, channel.last_read_at)
-                    for channel in others_channel
+                    (join_info.user_id, join_info.last_read_at)
+                    for join_info in others_join_infos
                 )
             else:
-                response['last_read'] = others_channel[0].last_read_at
+                response['last_read'] = others_join_infos[0].last_read_at
 
             self.transport.write(bson.dumps(response))
 
@@ -176,8 +180,8 @@ class BaseChatProtocol(DnaProtocol):
     @in_channel_required
     def do_publish(self, request):
         def refresh_last_read_at(published_at):
-            self.channel.last_read_at = published_at
-            self.channel.save()
+            self.join_info.last_read_at = published_at
+            self.join_info.save()
 
         def publish_to_client(result, channel_name, message_):
             self.factory.redis_session.publish(channel_name, bson.dumps(message_))
@@ -193,21 +197,21 @@ class BaseChatProtocol(DnaProtocol):
             writer=self.user.id,
             published_at=time.time(),
             method=u'publish',
-            channel=unicode(self.channel.name)
+            channel=unicode(self.join_info.channel)
         )
         d = deferToThread(refresh_last_read_at, message['published_at'])
-        d.addCallback(publish_to_client, self.channel.name, message)
+        d.addCallback(publish_to_client, self.join_info.channel, message)
         d.addCallback(write_to_sqs, message)
 
     def exit_channel(self):
         if not self.user:
             return
-        if not self.channel:
+        if not self.join_info:
             return
 
-        self.channel.save()
-        self.factory.channels[self.channel.name].remove(self)
-        self.channel = None
+        self.join_info.save()
+        self.factory.channels[self.join_info.channel].remove(self)
+        self.join_info = None
 
     def connectionLost(self, reason=None):
         logger.info('Connection Lost : %s' % reason)
