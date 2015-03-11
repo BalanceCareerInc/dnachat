@@ -1,4 +1,5 @@
 import bson
+import time
 from socket import AF_INET, SOCK_STREAM, socket
 from dnachat.models import Channel
 from pytest import fixture
@@ -50,17 +51,17 @@ def test_create():
     assert response['partner_id'] == 'id2'
 
 
-def test_join(channel1, user1):
+def test_attend(channel1, user1):
     client_sock = socket(AF_INET, SOCK_STREAM)
     client_sock.connect(('localhost', config.PORT))
     client_sock.sendobj(dict(method='authenticate', id=user1))
     client_sock.recvobj()
 
-    client_sock.sendobj(dict(method='join', channel=channel1))
+    client_sock.sendobj(dict(method='attend', channel=channel1))
     response = client_sock.recvobj()
-    assert response['method'] == 'join'
+    assert response['method'] == 'attend'
     assert response['channel'] == channel1
-    assert response['last_read'] == 0.0
+    assert time.time() - response['last_read'] < 1.0
     client_sock.close()
 
 
@@ -69,14 +70,14 @@ def test_publish(channel1, user1, user2):
     sock1.connect(('localhost', config.PORT))
     sock1.sendobj(dict(method='authenticate', id=user1))
     sock1.recvobj()
-    sock1.sendobj(dict(method='join', channel=channel1))
+    sock1.sendobj(dict(method='attend', channel=channel1))
     sock1.recvobj()
 
     sock2 = socket(AF_INET, SOCK_STREAM)
     sock2.connect(('localhost', config.PORT))
     sock2.sendobj(dict(method='authenticate', id=user2))
     sock2.recvobj()
-    sock2.sendobj(dict(method='join', channel=channel1))
+    sock2.sendobj(dict(method='attend', channel=channel1))
     sock2.recvobj()
 
     sock1.sendobj(dict(method='publish', message='Hi!', type='text'))
