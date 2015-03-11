@@ -1,4 +1,4 @@
-import hashlib
+import time
 from uuid import uuid1
 from bynamodb.attributes import StringAttribute, NumberAttribute, BooleanAttribute
 from bynamodb.indexes import GlobalAllIndex
@@ -8,8 +8,9 @@ from bynamodb.model import Model
 class ChannelJoinInfo(Model):
     channel = StringAttribute(hash_key=True)
     user_id = StringAttribute(range_key=True)
-    last_sent_at = NumberAttribute(default=0.0)
-    last_read_at = NumberAttribute(default=0.0)
+    joined_at = NumberAttribute(default=time.time)
+    last_sent_at = NumberAttribute(default=time.time)
+    last_read_at = NumberAttribute(default=time.time)
 
     class UserIndex(GlobalAllIndex):
         hash_key = 'user_id'
@@ -48,7 +49,7 @@ class Channel(Model):
     @classmethod
     def create_channel(cls, user_ids, is_group_chat=False):
         channel = cls.put_item(
-            name=hashlib.sha512(str(uuid1())).digest().encode('base64').strip(),
+            name=str(uuid1()),
             is_group_chat=is_group_chat
         )
         join_infos = []
