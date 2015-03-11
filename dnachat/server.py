@@ -23,7 +23,7 @@ from .models import Message as DnaMessage, Channel, ChannelJoinInfo
 class BaseChatProtocol(DnaProtocol):
     def __init__(self):
         self.user = None
-        self.join_info = None
+        self.attended_channel_join_info = None
         self.status = 'pending'
         self.pending_messages = []
         self.pending_messages_lock = threading.Lock()
@@ -135,6 +135,20 @@ class BaseChatProtocol(DnaProtocol):
 
         main()
 
+    @auth_required
+    def do_join(self, request):
+        try:
+            channel = Channel.get_item(request['channel'])
+        except ItemNotFoundException:
+            raise ProtocolError('Not exist channel: "%s"' % request['channel'])
+        if not channel.is_group_chat:
+            raise ProtocolError('Not a group chat: %s' % request['channel'])
+        partner_ids = [join_info.user_id for join_info in ChannelJoinInfo.by_channel(channel.name)]
+        ChannelJoinInfo.put_item(
+            channel=channel.name,
+            user_id=self.user.id,
+        )
+        self.transport.write(bson.dumps(dict(partner_ids=partner_ids)))
 
     @auth_required
     def do_attend(self, request):
@@ -146,7 +160,7 @@ class BaseChatProtocol(DnaProtocol):
                 raise ProtocolError('Channel is not exists')
 
         def attend_channel(join_info):
-            self.join_info = join_info
+            self.attended_channel_join_info = join_info
             clients = [
                 client
                 for client in self.factory.channels.get(join_info.channel, [])
@@ -160,7 +174,7 @@ class BaseChatProtocol(DnaProtocol):
             ]
 
             response = dict(method=u'join', channel=join_info.channel)
-            if Channel.get_item(self.join_info.channel).is_group_chat:
+            if Channel.get_item(self.attended_channel_join_info.channel).is_group_chat:
                 response['last_read'] = dict(
                     (join_info.user_id, join_info.last_read_at)
                     for join_info in others_join_infos
@@ -180,8 +194,8 @@ class BaseChatProtocol(DnaProtocol):
     @in_channel_required
     def do_publish(self, request):
         def refresh_last_read_at(published_at):
-            self.join_info.last_read_at = published_at
-            self.join_info.save()
+            self.attended_channel_join_info.last_read_at = published_at
+            self.attended_channel_join_info.save()
 
         def publish_to_client(result, channel_name, message_):
             self.factory.redis_session.publish(channel_name, bson.dumps(message_))
@@ -197,21 +211,21 @@ class BaseChatProtocol(DnaProtocol):
             writer=self.user.id,
             published_at=time.time(),
             method=u'publish',
-            channel=unicode(self.join_info.channel)
+            channel=unicode(self.attended_channel_join_info.channel)
         )
         d = deferToThread(refresh_last_read_at, message['published_at'])
-        d.addCallback(publish_to_client, self.join_info.channel, message)
+        d.addCallback(publish_to_client, self.attended_channel_join_info.channel, message)
         d.addCallback(write_to_sqs, message)
 
     def exit_channel(self):
         if not self.user:
             return
-        if not self.join_info:
+        if not self.attended_channel_join_info:
             return
 
-        self.join_info.save()
-        self.factory.channels[self.join_info.channel].remove(self)
-        self.join_info = None
+        self.attended_channel_join_info.save()
+        self.factory.channels[self.attended_channel_join_info.channel].remove(self)
+        self.attended_channel_join_info = None
 
     def connectionLost(self, reason=None):
         logger.info('Connection Lost : %s' % reason)
