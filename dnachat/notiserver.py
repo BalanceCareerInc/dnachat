@@ -5,7 +5,7 @@ import json
 from boto import sqs, sns
 
 from .logger import logger
-from .models import Channel
+from .models import ChannelJoinInfo
 from .settings import conf
 
 
@@ -17,7 +17,7 @@ class NotificationSender(object):
 
     def start(self):
         """
-        Message has to have key 'message', 'writer', 'channel', 'published_at'
+        SQS message has to have key 'message', 'writer', 'channel', 'published_at'
         """
 
         task = self.publish()
@@ -37,13 +37,13 @@ class NotificationSender(object):
                 message['gcm_type'] = 'chat'
                 gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
                 data = dict(default='default message', GCM=gcm_json)
-                for joiner in Channel.users_of(message['channel']):
-                    if joiner.user_id == message['writer']:
+                for join_info in ChannelJoinInfo.by_channel(message['channel']):
+                    if join_info.user_id == message['writer']:
                         continue
                     try:
                         logger.debug('\t%s' % str(self.sns_conn.publish(
                             message=json.dumps(data, ensure_ascii=False),
-                            target_arn=conf['PROTOCOL'].get_user_by_id(joiner.user_id).endpoint_arn,
+                            target_arn=conf['PROTOCOL'].get_user_by_id(join_info.user_id).endpoint_arn,
                             message_structure='json'
                         )))
                     except boto.exception.BotoServerError, e:
