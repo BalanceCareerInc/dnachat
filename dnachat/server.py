@@ -59,7 +59,7 @@ class BaseChatProtocol(DnaProtocol):
             for join_info in [join_info for channel in channel_names
                               for join_info in ChannelJoinInfo.by_channel(channel)]:
                 if join_info.user_id == partner_id:
-                    return join_info.channel
+                    return Channel.get_item(channel)
             raise ItemNotFoundException
 
         def create_channel(err, user_ids, is_group_chat):
