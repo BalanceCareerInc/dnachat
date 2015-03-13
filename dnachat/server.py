@@ -235,7 +235,7 @@ class BaseChatProtocol(DnaProtocol):
         self.ensure_valid_message(request)
         self.publish_message(request['type'], self.attended_channel_join_info.channel, request['message'], self.user.id)
 
-    def publish_message(self, type_, channel, message, writer):
+    def publish_message(self, type_, channel_name, message, writer):
 
         def refresh_last_read_at(published_at):
             self.attended_channel_join_info.last_read_at = published_at
@@ -249,14 +249,14 @@ class BaseChatProtocol(DnaProtocol):
 
         message = dict(
             type=unicode(type_),
-            channel=unicode(channel),
+            channel=unicode(channel_name),
             message=unicode(message),
             writer=writer,
             published_at=time.time(),
             method=u'publish',
         )
         d = deferToThread(refresh_last_read_at, message['published_at'])
-        d.addCallback(publish_to_client, self.attended_channel_join_info.channel, message)
+        d.addCallback(publish_to_client, channel_name, message)
         d.addCallback(write_to_sqs, message)
 
     def exit_channel(self):

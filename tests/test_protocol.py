@@ -26,6 +26,12 @@ def channel1(user1, user2):
     return channels[0].name
 
 
+@fixture
+def group_chat_channel1(user1):
+    channel, _ = Channel.create_channel([user1], is_group_chat=True)
+    return channel.name
+
+
 def test_authenticate():
     client_sock = socket(AF_INET, SOCK_STREAM)
     client_sock.connect(('localhost', config.PORT))
@@ -49,6 +55,21 @@ def test_create():
     assert response['method'] == 'create'
     assert 'channel' in response
     assert response['partner_id'] == 'id2'
+
+
+def test_join(group_chat_channel1, user1, user2):
+    client_sock = socket(AF_INET, SOCK_STREAM)
+    client_sock.connect(('localhost', config.PORT))
+    client_sock.sendobj(dict(method='authenticate', id=user2))
+    client_sock.recvobj()
+
+    client_sock.sendobj(dict(method='join', channel=group_chat_channel1))
+    response = client_sock.recvobj()
+    client_sock.close()
+
+    assert response['method'] == 'join'
+    assert response['channel'] == group_chat_channel1
+    assert response['partner_ids'] == [user1]
 
 
 def test_attend(channel1, user1):
