@@ -17,7 +17,7 @@ from .dna.protocol import DnaProtocol, ProtocolError
 from .logger import logger
 from .transmission import Transmitter
 from .settings import conf
-from .models import Message as DnaMessage, Channel, ChannelJoinInfo
+from .models import Message as DnaMessage, Channel, ChannelJoinInfo, ChannelWithdrawalLog
 
 
 class BaseChatProtocol(DnaProtocol):
@@ -126,12 +126,12 @@ class BaseChatProtocol(DnaProtocol):
                     )
                 ]
                 if new_messages:
-                    deferToThread(save_last_read_at, join_info)
+                    deferToThread(update_last_sent_at, join_info)
                     messages += new_messages
 
             self.transport.write(bson.dumps(dict(method=u'unread', messages=messages)))
 
-        def save_last_read_at(join_info):
+        def update_last_sent_at(join_info):
             join_info.last_sent_at = time.time()
             join_info.save()
 
@@ -144,7 +144,7 @@ class BaseChatProtocol(DnaProtocol):
         except ItemNotFoundException:
             raise ProtocolError('Not exist channel: "%s"' % request['channel'])
         if not channel.is_group_chat:
-            raise ProtocolError('Not a group chat: %s' % request['channel'])
+            raise ProtocolError('Not a group chat: "%s"' % request['channel'])
         partner_ids = [join_info.user_id for join_info in ChannelJoinInfo.by_channel(channel.name)]
         self.publish_message('join', channel.name, '', self.user.id)
         ChannelJoinInfo.put_item(
@@ -152,6 +152,38 @@ class BaseChatProtocol(DnaProtocol):
             user_id=self.user.id,
         )
         self.transport.write(bson.dumps(dict(partner_ids=partner_ids)))
+
+    @auth_required
+    def do_withdrawal(self, request):
+        def get_join_info(channel_name):
+            try:
+                channel = Channel.get_item(channel_name)
+            except ItemNotFoundException:
+                raise ProtocolError('Not exist channel: "%s"' % channel_name)
+            if not channel.is_group_chat:
+                raise ProtocolError('Not a group chat: "%s"' % channel_name)
+            try:
+                join_info = ChannelJoinInfo.get_item(channel.name, request.user.id)
+            except ItemNotFoundException:
+                raise ProtocolError('Not a member of channel: "%s"' % channel.name)
+            return join_info
+
+        def withdrawal(join_info):
+
+            ChannelWithdrawalLog.put_item(
+                channel=join_info.channel,
+                user_id=join_info.user_id,
+                joined_at=join_info.joined_at,
+                last_read_at=join_info.last_read_at,
+            )
+            join_info.delete()
+            self.transport.write(bson.dumps(dict(method='withdrawal', channel=join_info.channel)))
+
+        d = deferToThread(get_join_info, request['channel'])
+        d.addCallback(withdrawal)
+
+
+
 
     @auth_required
     def do_attend(self, request):

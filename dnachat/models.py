@@ -5,6 +5,14 @@ from bynamodb.indexes import GlobalAllIndex
 from bynamodb.model import Model
 
 
+class ChannelWithdrawalLog(Model):
+    channel = StringAttribute(hash_key=True)
+    user_id = StringAttribute(range_key=True)
+    joined_at = NumberAttribute()
+    last_read_at = NumberAttribute()
+    withdrawal_at = NumberAttribute(default=time.time)
+
+
 class ChannelJoinInfo(Model):
     channel = StringAttribute(hash_key=True)
     user_id = StringAttribute(range_key=True)
