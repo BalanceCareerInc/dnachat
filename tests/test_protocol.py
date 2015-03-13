@@ -1,7 +1,8 @@
 import bson
 import time
 from socket import AF_INET, SOCK_STREAM, socket
-from dnachat.models import Channel
+from bynamodb.exceptions import ItemNotFoundException
+from dnachat.models import Channel, ChannelJoinInfo
 from pytest import fixture
 
 import config
@@ -70,6 +71,25 @@ def test_join(group_chat_channel1, user1, user2):
     assert response['method'] == 'join'
     assert response['channel'] == group_chat_channel1
     assert response['partner_ids'] == [user1]
+
+
+def test_withdrawal(group_chat_channel1, user1):
+    client_sock = socket(AF_INET, SOCK_STREAM)
+    client_sock.connect(('localhost', config.PORT))
+    client_sock.sendobj(dict(method='authenticate', id=user1))
+    client_sock.recvobj()
+
+    client_sock.sendobj(dict(method='withdrawal', channel=group_chat_channel1))
+    response = client_sock.recvobj()
+    client_sock.close()
+
+    assert response['method'] == 'withdrawal'
+    try:
+        ChannelJoinInfo.get_item(group_chat_channel1, user1)
+    except ItemNotFoundException:
+        pass
+    else:
+        assert False
 
 
 def test_attend(channel1, user1):
