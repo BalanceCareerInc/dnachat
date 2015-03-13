@@ -174,7 +174,7 @@ class BaseChatProtocol(DnaProtocol):
                 if channel_.user_id != self.user.id
             ]
 
-            response = dict(method=u'attend', channel=join_info.channel)
+            response = dict(method=request.method, channel=join_info.channel)
             if Channel.get_item(self.attended_channel_join_info.channel).is_group_chat:
                 response['last_read'] = dict(
                     (join_info.user_id, join_info.last_read_at)
