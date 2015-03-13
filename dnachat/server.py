@@ -167,13 +167,12 @@ class BaseChatProtocol(DnaProtocol):
             if not channel.is_group_chat:
                 raise ProtocolError('Not a group chat: "%s"' % channel_name)
             try:
-                join_info = ChannelJoinInfo.get_item(channel.name, request.user.id)
+                join_info = ChannelJoinInfo.get_item(channel.name, self.user.id)
             except ItemNotFoundException:
                 raise ProtocolError('Not a member of channel: "%s"' % channel.name)
             return join_info
 
         def withdrawal(join_info):
-
             ChannelWithdrawalLog.put_item(
                 channel=join_info.channel,
                 user_id=join_info.user_id,
