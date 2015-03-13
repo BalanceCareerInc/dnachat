@@ -23,6 +23,7 @@ from .models import Message as DnaMessage, Channel, ChannelJoinInfo
 class BaseChatProtocol(DnaProtocol):
     def __init__(self):
         self.user = None
+        self.protocol_version = None
         self.attended_channel_join_info = None
         self.status = 'pending'
         self.pending_messages = []
@@ -40,6 +41,7 @@ class BaseChatProtocol(DnaProtocol):
         self.user.join_infos = list(ChannelJoinInfo.by_user(self.user.id))
         if not self.user:
             raise ProtocolError('Authentication failed')
+        self.protocol_version = request.get('protocol_version')
         self.transport.write(bson.dumps(dict(method=u'authenticate', status=u'OK')))
 
     @auth_required
