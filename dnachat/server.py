@@ -151,7 +151,11 @@ class BaseChatProtocol(DnaProtocol):
             channel=channel.name,
             user_id=self.user.id,
         )
-        self.transport.write(bson.dumps(dict(partner_ids=partner_ids)))
+        self.transport.write(bson.dumps(dict(
+            method='join',
+            channel=channel.name,
+            partner_ids=partner_ids
+        )))
 
     @auth_required
     def do_withdrawal(self, request):
