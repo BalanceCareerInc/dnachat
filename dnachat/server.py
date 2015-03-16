@@ -87,6 +87,9 @@ class BaseChatProtocol(DnaProtocol):
             self.factory.redis_session.publish(channel_name_, bson.dumps(message_))
 
         def refresh_last_read_at(channel_name, published_at):
+            if self.attended_channel_join_info.channel == channel_name:
+                self.attended_channel_join_info.last_read_at = published_at
+
             for join_info in self.user.join_infos:
                 if join_info.channel != channel_name:
                     continue
