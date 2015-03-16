@@ -87,10 +87,6 @@ class BaseChatProtocol(DnaProtocol):
             self.factory.redis_session.publish(channel_name_, bson.dumps(message_))
 
         def refresh_last_read_at(channel_name, published_at):
-            if self.attended_channel_join_info and \
-               self.attended_channel_join_info.channel == channel_name:
-                self.attended_channel_join_info.last_read_at = published_at
-
             for join_info in self.user.join_infos:
                 if join_info.channel != channel_name:
                     continue
@@ -189,9 +185,6 @@ class BaseChatProtocol(DnaProtocol):
         d = deferToThread(get_join_info, request['channel'])
         d.addCallback(withdrawal)
 
-
-
-
     @auth_required
     def do_attend(self, request):
         def check_is_able_to_attend(channel_name):
@@ -268,6 +261,7 @@ class BaseChatProtocol(DnaProtocol):
         if not self.attended_channel_join_info:
             return
 
+        self.attended_channel_join_info.last_read_at = [ji.last_read_at for ji in self.user.join_infos]
         self.attended_channel_join_info.save()
         self.factory.channels[self.attended_channel_join_info.channel].remove(self)
         self.attended_channel_join_info = None
