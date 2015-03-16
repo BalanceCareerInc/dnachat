@@ -5,11 +5,13 @@ import subprocess
 import time
 
 from threading import Thread
+from boto.dynamodb2.layer1 import DynamoDBConnection
 from bynamodb.model import Model
 from bynamodb.patcher import patch_dynamodb_connection
 from twisted.internet import reactor
 
 import config
+from dnachat.models import Message, Channel, ChannelJoinInfo
 from dnachat.runner import run_dnachat
 from dnachat import models
 
@@ -52,6 +54,17 @@ def pytest_configure():
             obj.create_table()
 
     time.sleep(0.5)
+
+
+def pytest_runtest_teardown():
+    conn = DynamoDBConnection()
+    conn.delete_table(Message.get_table_name())
+    conn.delete_table(ChannelJoinInfo.get_table_name())
+    conn.delete_table(Channel.get_table_name())
+
+    Message.create_table()
+    ChannelJoinInfo.create_table()
+    Channel.create_table()
 
 
 def pytest_unconfigure():

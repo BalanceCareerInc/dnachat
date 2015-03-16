@@ -2,7 +2,7 @@ import bson
 import time
 from socket import AF_INET, SOCK_STREAM, socket
 from bynamodb.exceptions import ItemNotFoundException
-from dnachat.models import Channel, ChannelJoinInfo
+from dnachat.models import Channel, ChannelJoinInfo, Message
 from pytest import fixture
 
 import config
@@ -112,3 +112,20 @@ def test_publish(channel1, user1, user2):
     assert response1['writer'] == user1
     assert response1['message'] == 'Hi!'
 
+
+def test_unread(channel1, user1, user2):
+    Message.put_item(
+        channel=channel1,
+        type=u'text',
+        message=u'Text Message',
+        writer=user1,
+        published_at=time.time()
+    )
+
+    with AuthenticatedClient(user2) as client_sock:
+        client_sock.sendobj(dict(method='unread', channel=channel1))
+        response = client_sock.recvobj()
+        assert response['method'] == u'unread'
+        new_messages = response['messages']
+        assert len(new_messages) == 1
+        assert new_messages[0]['message'] == u'Text Message'
