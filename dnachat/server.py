@@ -83,8 +83,15 @@ class BaseChatProtocol(DnaProtocol):
 
     @auth_required
     def do_ack(self, request):
-        def publish_to_client(channel_name_, message_):
-            self.factory.redis_session.publish(channel_name_, bson.dumps(message_))
+        def main():
+            message = dict(
+                sender=self.user.id,
+                published_at=request['published_at'],
+                method=u'ack',
+                channel=request['channel']
+            )
+            self.factory.redis_session.publish(request['channel'], bson.dumps(message))
+            deferToThread(refresh_last_read_at, request['channel'], request['published_at'])
 
         def refresh_last_read_at(channel_name, published_at):
             for join_info in self.user.join_infos:
@@ -93,20 +100,11 @@ class BaseChatProtocol(DnaProtocol):
                 join_info.last_read_at = published_at
                 join_info.save()
                 break
-
-        message = dict(
-            sender=self.user.id,
-            published_at=request['published_at'],
-            method=u'ack',
-            channel=request['channel']
-        )
-        deferToThread(publish_to_client, request['channel'], message)
-        deferToThread(refresh_last_read_at, request['channel'], request['published_at'])
+        main()
 
     @auth_required
     def do_unread(self, request):
         def main():
-            messages = []
             join_infos = self.user.join_infos
             if 'channel' in request:
                 join_infos = [
@@ -116,7 +114,11 @@ class BaseChatProtocol(DnaProtocol):
                 ]
                 if not join_infos:
                     raise ProtocolError('Not a valid channel')
+            deferToThread(send_messages, join_infos)
 
+        def send_messages(join_infos):
+            messages = []
+            updated_join_infos = []
             for join_info in join_infos:
                 new_messages = [
                     message.to_dict()
@@ -126,14 +128,14 @@ class BaseChatProtocol(DnaProtocol):
                     )
                 ]
                 if new_messages:
-                    deferToThread(update_last_sent_at, join_info)
+                    updated_join_infos.append(join_info)
                     messages += new_messages
 
             self.transport.write(bson.dumps(dict(method=u'unread', messages=messages)))
 
-        def update_last_sent_at(join_info):
-            join_info.last_sent_at = time.time()
-            join_info.save()
+            for join_info in updated_join_infos:
+                join_info.last_sent_at = time.time()
+                join_info.save()
 
         main()
 
@@ -204,7 +206,8 @@ class BaseChatProtocol(DnaProtocol):
             self.factory.channels[join_info.channel] = clients
 
             others_join_infos = [
-                channel_ for channel_ in ChannelJoinInfo.by_channel(join_info.channel)
+                channel_
+                for channel_ in ChannelJoinInfo.by_channel(join_info.channel)
                 if channel_.user_id != self.user.id
             ]
 
