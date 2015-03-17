@@ -58,8 +58,10 @@ class BaseChatProtocol(DnaProtocol):
             d.addCallback(send_channel, [m for m in chat_members if m != self.user.id])
 
         def get_from_exists_private_channel(channel_names, partner_id):
-            is_group_chat = dict((channel.name, channel.is_group_chat) for channel in
-                                 Channel.query(name__in=channel_names))
+            is_group_chat = dict(
+                (channel.name, channel.is_group_chat)
+                for channel in Channel.scan(name__in=channel_names)
+            )
             for join_info in [join_info for channel in channel_names
                               for join_info in ChannelJoinInfo.by_channel(channel)]:
                 if join_info.user_id == partner_id and not is_group_chat[join_info.channel]:
