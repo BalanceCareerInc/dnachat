@@ -49,7 +49,7 @@ class BaseChatProtocol(DnaProtocol):
         def main():
             if 'partner_id' in request:
                 channel_names = [join_info.channel for join_info in self.user.join_infos]
-                d = deferToThread(get_from_exists_channels, channel_names, request['partner_id'])
+                d = deferToThread(get_from_exists_private_channel, channel_names, request['partner_id'])
                 chat_members = [self.user.id, request['partner_id']]
                 d.addErrback(create_channel, chat_members, False)
             else:
@@ -57,10 +57,12 @@ class BaseChatProtocol(DnaProtocol):
                 d = deferToThread(create_channel, None, chat_members, True)
             d.addCallback(send_channel, [m for m in chat_members if m != self.user.id])
 
-        def get_from_exists_channels(channel_names, partner_id):
+        def get_from_exists_private_channel(channel_names, partner_id):
+            is_group_chat = dict((channel.name, channel.is_group_chat) for channel in
+                                 Channel.query(name__in=channel_names))
             for join_info in [join_info for channel in channel_names
                               for join_info in ChannelJoinInfo.by_channel(channel)]:
-                if join_info.user_id == partner_id:
+                if join_info.user_id == partner_id and not is_group_chat[join_info.channel]:
                     return Channel.get_item(join_info.channel)
             raise ItemNotFoundException
 
