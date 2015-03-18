@@ -60,7 +60,7 @@ class BaseChatProtocol(DnaProtocol):
         def get_from_exists_private_channel(channel_names, partner_id):
             is_group_chat = dict(
                 (channel.name, channel.is_group_chat)
-                for channel in Channel.scan(name__in=channel_names)
+                for channel in Channel.batch_get(*[(name,)for name in channel_names])
             )
             for join_info in [join_info for channel in channel_names
                               for join_info in ChannelJoinInfo.by_channel(channel)]:
