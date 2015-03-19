@@ -1,6 +1,6 @@
 # -*-coding:utf8-*-
-
 import bson
+import datetime
 import json
 import redis
 import threading
@@ -17,7 +17,8 @@ from .dna.protocol import DnaProtocol, ProtocolError
 from .logger import logger
 from .transmission import Transmitter
 from .settings import conf
-from .models import Message as DnaMessage, Channel, ChannelJoinInfo, ChannelWithdrawalLog
+from .models import (Message as DnaMessage, Channel, ChannelJoinInfo,
+                     ChannelWithdrawalLog, ChannelUsageLog)
 
 
 class BaseChatProtocol(DnaProtocol):
@@ -250,6 +251,13 @@ class BaseChatProtocol(DnaProtocol):
         def write_to_sqs(result, message_):
             self.factory.queue.write(QueueMessage(body=json.dumps(message_)))
 
+        def write_channel_usage_log(result, message_):
+            ChannelUsageLog.put_item(
+                date=datetime.datetime.fromtimestamp(message_['published_at']).strftime('%Y-%m-%d'),
+                channel=message_['channel']
+            )
+
+
         message = dict(
             type=unicode(type_),
             channel=unicode(channel_name),
@@ -261,6 +269,7 @@ class BaseChatProtocol(DnaProtocol):
         d = deferToThread(refresh_last_read_at, message['published_at'])
         d.addCallback(publish_to_client, channel_name, message)
         d.addCallback(write_to_sqs, message)
+        d.addCallback(write_channel_usage_log, message)
 
     def exit_channel(self):
         if not self.user:

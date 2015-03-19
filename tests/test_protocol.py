@@ -1,8 +1,9 @@
 import bson
+import datetime
 import time
 from socket import AF_INET, SOCK_STREAM, socket
 from bynamodb.exceptions import ItemNotFoundException
-from dnachat.models import Channel, ChannelJoinInfo, Message
+from dnachat.models import Channel, ChannelJoinInfo, Message, ChannelUsageLog
 from pytest import fixture
 
 import config
@@ -111,6 +112,10 @@ def test_publish(channel1, user1, user2):
     assert response1['method'] == 'publish'
     assert response1['writer'] == user1
     assert response1['message'] == 'Hi!'
+
+    assert ChannelUsageLog.get_item(
+        datetime.datetime.fromtimestamp(response1['published_at']).strftime('%Y-%m-%d'),
+        response1['channel'])
 
 
 def test_unread(channel1, user1, user2):

@@ -84,3 +84,8 @@ class Message(Model):
             message=self.message,
             channel=self.channel
         )
+
+
+class ChannelUsageLog(Model):
+    date = StringAttribute(hash_key=True)
+    channel = StringAttribute(range_key=True)
