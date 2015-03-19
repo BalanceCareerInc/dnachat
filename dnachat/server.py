@@ -15,7 +15,7 @@ from twisted.internet.threads import deferToThread
 from .decorators import in_channel_required, auth_required
 from .dna.protocol import DnaProtocol, ProtocolError
 from .logger import logger
-from .transmission import Transmitter
+from .transmission import TransmitDistributor
 from .settings import conf
 from .models import (Message as DnaMessage, Channel, ChannelJoinInfo,
                      ChannelWithdrawalLog, ChannelUsageLog)
@@ -275,13 +275,14 @@ class BaseChatProtocol(DnaProtocol):
             for ji in self.user.join_infos
             if ji.channel == self.attended_channel_join_info.channel
         ][0]
-        published_at = self.attended_channel_join_info.last_published_at
-        delattr(self.attended_channel_join_info, 'last_published_at')
-        ChannelUsageLog.put_item(
-            date=datetime.datetime.fromtimestamp(published_at).strftime('%Y-%m-%d'),
-            channel=self.attended_channel_join_info.channel,
-            last_published_at=published_at
-        )
+        if hasattr(self.attended_channel_join_info, 'last_published_at'):
+            published_at = self.attended_channel_join_info.last_published_at
+            delattr(self.attended_channel_join_info, 'last_published_at')
+            ChannelUsageLog.put_item(
+                date=datetime.datetime.fromtimestamp(published_at).strftime('%Y-%m-%d'),
+                channel=self.attended_channel_join_info.channel,
+                last_published_at=published_at
+            )
         self.attended_channel_join_info.save()
         self.factory.channels[self.attended_channel_join_info.channel].remove(self)
         self.attended_channel_join_info = None
@@ -319,5 +320,5 @@ class ChatFactory(Factory):
         self.channels = dict()
         self.redis_session = redis.StrictRedis(host=redis_host)
         self.queue = sqs.connect_to_region('ap-northeast-1').get_queue(conf['NOTIFICATION_QUEUE_NAME'])
-        Transmitter(self).start()
+        TransmitDistributor(self).start()
 
