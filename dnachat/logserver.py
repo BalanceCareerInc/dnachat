@@ -19,10 +19,8 @@ class ChatLogger(Thread):
             try:
                 message = self.queue.get(timeout=3)
             except Empty:
-                print 'empty'
                 continue
             data = bson.loads(message['data'])
-            print data
             if data['method'] == 'ack':
                 continue
             logger.debug(data)

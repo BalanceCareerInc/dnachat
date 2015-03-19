@@ -43,5 +43,4 @@ class TransmitDistributor(Thread):
         for x in xrange(multiprocessing.cpu_count()):
             Transmitter(queue, self.factory).start()
         for message in pubsub.listen():
-            print message
             queue.put(message)
