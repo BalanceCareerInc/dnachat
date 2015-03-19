@@ -1,9 +1,17 @@
 # -*-coding:utf8-*-
 import bson
+import threading
 from redis import StrictRedis
 
 from .models import Message
 from .logger import logger
+
+
+def put_message(data):
+    try:
+        Message.put_item(**data)
+    except Exception, e:
+        logger.error('Error on save message', exc_info=True)
 
 
 class ChatLogger(object):
@@ -19,7 +27,4 @@ class ChatLogger(object):
             if data['method'] == 'ack':
                 continue
             logger.debug(data)
-            try:
-                Message.put_item(**data)
-            except Exception, e:
-                logger.error('Error on save message', exc_info=True)
+            threading.Thread(target=put_message, args=(data,)).start()
