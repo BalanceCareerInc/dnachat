@@ -40,7 +40,7 @@ class TransmitDistributor(Thread):
         pubsub.psubscribe('*')
         pubsub.listen().next()
         queue = Queue()
-        for x in xrange(multiprocessing.cpu_count()):
+        for x in xrange(multiprocessing.cpu_count() * 2):
             Transmitter(queue, self.factory).start()
         for message in pubsub.listen():
             queue.put(message)

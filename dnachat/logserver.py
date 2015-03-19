@@ -40,7 +40,7 @@ class ChatLogDistributor(object):
         pubsub.listen().next()
         queue = Queue()
 
-        for _ in xrange(cpu_count()):
+        for _ in xrange(cpu_count() * 2):
             ChatLogger(queue).start()
 
         for message in pubsub.listen():
