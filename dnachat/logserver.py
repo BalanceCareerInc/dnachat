@@ -1,20 +1,38 @@
 # -*-coding:utf8-*-
+from Queue import Queue, Empty
 import bson
-import threading
+from multiprocessing import cpu_count
 from redis import StrictRedis
+from threading import Thread
 
 from .models import Message
 from .logger import logger
 
 
-def put_message(data):
-    try:
-        Message.put_item(**data)
-    except Exception, e:
-        logger.error('Error on save message', exc_info=True)
+class ChatLogger(Thread):
+    def __init__(self, queue):
+        Thread.__init__(self)
+        self.queue = queue
+
+    def run(self):
+        while True:
+            try:
+                message = self.queue.get(timeout=3)
+            except Empty:
+                print 'empty'
+                continue
+            data = bson.loads(message['data'])
+            print data
+            if data['method'] == 'ack':
+                continue
+            logger.debug(data)
+            try:
+                Message.put_item(**data)
+            except Exception, e:
+                logger.error('Error on save message', exc_info=True)
 
 
-class ChatLogger(object):
+class ChatLogDistributor(object):
     def __init__(self, redis_host):
         self.session = StrictRedis(host=redis_host)
 
@@ -22,9 +40,10 @@ class ChatLogger(object):
         pubsub = self.session.pubsub()
         pubsub.psubscribe('*')
         pubsub.listen().next()
+        queue = Queue()
+
+        for _ in xrange(cpu_count()):
+            ChatLogger(queue).start()
+
         for message in pubsub.listen():
-            data = bson.loads(message['data'])
-            if data['method'] == 'ack':
-                continue
-            logger.debug(data)
-            threading.Thread(target=put_message, args=(data,)).start()
+            queue.put(message)

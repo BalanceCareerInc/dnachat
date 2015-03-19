@@ -113,7 +113,7 @@ def test_publish(channel1, user1, user2):
     assert response1['writer'] == user1
     assert response1['message'] == 'Hi!'
 
-    time.sleep(0.1)
+    time.sleep(0.5)
     channel_usage_log = ChannelUsageLog.get_item(
         datetime.datetime.fromtimestamp(response1['published_at']).strftime('%Y-%m-%d'),
         response1['channel'])
