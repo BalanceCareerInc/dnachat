@@ -247,18 +247,10 @@ class BaseChatProtocol(DnaProtocol):
 
         def publish_to_client(result, channel_name, message_):
             self.factory.redis_session.publish(channel_name, bson.dumps(message_))
+            self.attended_channel_join_info.last_published_at = message_['published_at']
 
         def write_to_sqs(result, message_):
             self.factory.queue.write(QueueMessage(body=json.dumps(message_)))
-
-        def write_channel_usage_log(result, message_):
-            published_at = message_['published_at']
-            ChannelUsageLog.put_item(
-                date=datetime.datetime.fromtimestamp(published_at).strftime('%Y-%m-%d'),
-                channel=message_['channel'],
-                last_published_at=published_at
-            )
-
 
         message = dict(
             type=unicode(type_),
@@ -271,7 +263,6 @@ class BaseChatProtocol(DnaProtocol):
         d = deferToThread(refresh_last_read_at, message['published_at'])
         d.addCallback(publish_to_client, channel_name, message)
         d.addCallback(write_to_sqs, message)
-        d.addCallback(write_channel_usage_log, message)
 
     def exit_channel(self):
         if not self.user:
@@ -284,6 +275,13 @@ class BaseChatProtocol(DnaProtocol):
             for ji in self.user.join_infos
             if ji.channel == self.attended_channel_join_info.channel
         ][0]
+        published_at = self.attended_channel_join_info.last_published_at
+        delattr(self.attended_channel_join_info, 'last_published_at')
+        ChannelUsageLog.put_item(
+            date=datetime.datetime.fromtimestamp(published_at).strftime('%Y-%m-%d'),
+            channel=self.attended_channel_join_info.channel,
+            last_published_at=published_at
+        )
         self.attended_channel_join_info.save()
         self.factory.channels[self.attended_channel_join_info.channel].remove(self)
         self.attended_channel_join_info = None
