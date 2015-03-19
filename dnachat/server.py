@@ -252,9 +252,11 @@ class BaseChatProtocol(DnaProtocol):
             self.factory.queue.write(QueueMessage(body=json.dumps(message_)))
 
         def write_channel_usage_log(result, message_):
+            published_at = message_['published_at']
             ChannelUsageLog.put_item(
-                date=datetime.datetime.fromtimestamp(message_['published_at']).strftime('%Y-%m-%d'),
-                channel=message_['channel']
+                date=datetime.datetime.fromtimestamp(published_at).strftime('%Y-%m-%d'),
+                channel=message_['channel'],
+                last_published_at=published_at
             )
 
 

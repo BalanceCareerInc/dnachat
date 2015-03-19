@@ -113,9 +113,10 @@ def test_publish(channel1, user1, user2):
     assert response1['writer'] == user1
     assert response1['message'] == 'Hi!'
 
-    assert ChannelUsageLog.get_item(
+    channel_usage_log = ChannelUsageLog.get_item(
         datetime.datetime.fromtimestamp(response1['published_at']).strftime('%Y-%m-%d'),
         response1['channel'])
+    assert channel_usage_log.last_published_at == response1['published_at']
 
 
 def test_unread(channel1, user1, user2):

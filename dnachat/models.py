@@ -89,3 +89,4 @@ class Message(Model):
 class ChannelUsageLog(Model):
     date = StringAttribute(hash_key=True)
     channel = StringAttribute(range_key=True)
+    last_published_at = NumberAttribute()
