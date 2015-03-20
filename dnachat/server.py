@@ -187,7 +187,7 @@ class BaseChatProtocol(DnaProtocol):
                 last_read_at=join_info.last_read_at,
             )
             join_info.delete()
-            self.transport.write(bson.dumps(dict(method='withdrawal', channel=join_info.channel)))
+            self.transport.write(bson.dumps(dict(method=u'withdrawal', channel=join_info.channel)))
 
         d = deferToThread(get_join_info, request['channel'])
         d.addCallback(withdrawal)
