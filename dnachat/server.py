@@ -241,11 +241,7 @@ class BaseChatProtocol(DnaProtocol):
 
     def publish_message(self, type_, channel_name, message, writer):
 
-        def refresh_last_read_at(published_at):
-            self.attended_channel_join_info.last_read_at = published_at
-            self.attended_channel_join_info.save()
-
-        def publish_to_client(result, channel_name, message_):
+        def publish_to_client(channel_name, message_):
             self.factory.redis_session.publish(channel_name, bson.dumps(message_))
             self.attended_channel_join_info.last_published_at = message_['published_at']
 
@@ -260,8 +256,7 @@ class BaseChatProtocol(DnaProtocol):
             published_at=time.time(),
             method=u'publish',
         )
-        d = deferToThread(refresh_last_read_at, message['published_at'])
-        d.addCallback(publish_to_client, channel_name, message)
+        d = deferToThread(publish_to_client, channel_name, message)
         d.addCallback(write_to_sqs, message)
 
     def exit_channel(self):
