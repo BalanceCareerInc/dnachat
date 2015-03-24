@@ -227,13 +227,10 @@ class BaseChatProtocol(DnaProtocol):
                 method=u'ack',
                 channel=request['channel']
             )
-            d = deferToThread(publish_ack, request['channel'], message)
-            d.addCallback(refresh_last_read_at, request['channel'], request['published_at'])
+            self.factory.redis_session.publish(request['channel'], bson.dumps(message))
+            deferToThread(refresh_last_read_at, request['channel'], request['published_at'])
 
-        def publish_ack(channel, message):
-            self.factory.redis_session.publish(channel, bson.dumps(message))
-
-        def refresh_last_read_at(result_, channel_name, published_at):
+        def refresh_last_read_at(channel_name, published_at):
             for join_info in self.user.join_infos:
                 if join_info.channel != channel_name:
                     continue
@@ -244,11 +241,7 @@ class BaseChatProtocol(DnaProtocol):
 
     def publish_message(self, type_, channel_name, message, writer):
 
-        def publish_to_client(channel_name, message_):
-            self.factory.redis_session.publish(channel_name, bson.dumps(message_))
-            self.attended_channel_join_info.last_published_at = message_['published_at']
-
-        def write_to_sqs(result, message_):
+        def write_to_sqs( message_):
             self.factory.queue.write(QueueMessage(body=json.dumps(message_)))
 
         message = dict(
@@ -259,8 +252,9 @@ class BaseChatProtocol(DnaProtocol):
             published_at=time.time(),
             method=u'publish',
         )
-        d = deferToThread(publish_to_client, channel_name, message)
-        d.addCallback(write_to_sqs, message)
+        self.factory.redis_session.publish(channel_name, bson.dumps(message))
+        self.attended_channel_join_info.last_published_at = message['published_at']
+        deferToThread(write_to_sqs, message)
 
     def exit_channel(self):
         if not self.user:
