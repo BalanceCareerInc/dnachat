@@ -87,27 +87,6 @@ class BaseChatProtocol(DnaProtocol):
         main()
 
     @auth_required
-    def do_ack(self, request):
-        def main():
-            message = dict(
-                sender=self.user.id,
-                published_at=request['published_at'],
-                method=u'ack',
-                channel=request['channel']
-            )
-            self.factory.redis_session.publish(request['channel'], bson.dumps(message))
-            deferToThread(refresh_last_read_at, request['channel'], request['published_at'])
-
-        def refresh_last_read_at(channel_name, published_at):
-            for join_info in self.user.join_infos:
-                if join_info.channel != channel_name:
-                    continue
-                join_info.last_read_at = published_at
-                join_info.save()
-                break
-        main()
-
-    @auth_required
     def do_unread(self, request):
         def main():
             join_infos = self.user.join_infos
@@ -238,6 +217,30 @@ class BaseChatProtocol(DnaProtocol):
     def do_publish(self, request):
         self.ensure_valid_message(request)
         self.publish_message(request['type'], self.attended_channel_join_info.channel, request['message'], self.user.id)
+
+    @auth_required
+    def do_ack(self, request):
+        def main():
+            message = dict(
+                sender=self.user.id,
+                published_at=request['published_at'],
+                method=u'ack',
+                channel=request['channel']
+            )
+            d = deferToThread(publish_ack, request['channel'], message)
+            d.addCallback(refresh_last_read_at, request['channel'], request['published_at'])
+
+        def publish_ack(channel, message):
+            self.factory.redis_session.publish(channel, bson.dumps(message))
+
+        def refresh_last_read_at(result_, channel_name, published_at):
+            for join_info in self.user.join_infos:
+                if join_info.channel != channel_name:
+                    continue
+                join_info.last_read_at = published_at
+                join_info.save()
+                break
+        main()
 
     def publish_message(self, type_, channel_name, message, writer):
 
