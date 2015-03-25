@@ -254,7 +254,8 @@ class BaseChatProtocol(DnaProtocol):
             method=u'publish',
         )
         self.factory.redis_session.publish(channel_name, bson.dumps(message))
-        self.attended_channel_join_info.last_published_at = message['published_at']
+        if self.attended_channel_join_info:
+            self.attended_channel_join_info.last_published_at = message['published_at']
         deferToThread(write_to_sqs, message)
 
     def exit_channel(self):
