@@ -167,7 +167,7 @@ class BaseChatProtocol(DnaProtocol):
             )
             join_info.delete()
             self.transport.write(bson.dumps(dict(method=u'withdrawal', channel=join_info.channel)))
-            self.publish_message(u'withdrawal', join_info.channel, join_info.channel, self.user.id)
+            self.publish_message(u'withdrawal', join_info.channel, '', self.user.id)
 
         d = deferToThread(get_join_info, request['channel'])
         d.addCallback(withdrawal)
@@ -217,7 +217,12 @@ class BaseChatProtocol(DnaProtocol):
     @in_channel_required
     def do_publish(self, request):
         self.ensure_valid_message(request)
-        self.publish_message(request['type'], self.attended_channel_join_info.channel, request['message'], self.user.id)
+        self.publish_message(
+            request['type'],
+            self.attended_channel_join_info.channel,
+            request['message'],
+            self.user.id
+        )
 
     @auth_required
     def do_ack(self, request):
