@@ -11,7 +11,7 @@ from bynamodb.patcher import patch_dynamodb_connection
 from twisted.internet import reactor
 
 import config
-from dnachat.models import Message, Channel, ChannelJoinInfo
+from dnachat.models import Message, Channel, ChannelJoinInfo, ChannelUsageLog, ChannelWithdrawalLog
 from dnachat.runner import run_dnachat
 from dnachat import models
 
@@ -60,10 +60,14 @@ def pytest_runtest_teardown():
     conn = DynamoDBConnection()
     conn.delete_table(Message.get_table_name())
     conn.delete_table(ChannelJoinInfo.get_table_name())
+    conn.delete_table(ChannelUsageLog.get_table_name())
     conn.delete_table(Channel.get_table_name())
+    conn.delete_table(ChannelWithdrawalLog.get_table_name())
 
     Message.create_table()
+    ChannelWithdrawalLog.create_table()
     ChannelJoinInfo.create_table()
+    ChannelUsageLog.create_table()
     Channel.create_table()
 
 

@@ -47,6 +47,12 @@ def group_chat_channel1(user1):
     return channel.name
 
 
+@fixture
+def group_chat_channel2(user1, user2):
+    channel, _ = Channel.create_channel([user1, user2], is_group_chat=True)
+    return channel.name
+
+
 def test_authenticate(user1):
     with AuthenticatedClient(user1) as client_sock:
         pass
@@ -71,14 +77,22 @@ def test_join(group_chat_channel1, user1):
     assert response['partner_ids'] == [user1]
 
 
-def test_withdrawal(group_chat_channel1, user1):
-    with AuthenticatedClient(user1) as client_sock:
-        client_sock.sendobj(dict(method='withdrawal', channel=group_chat_channel1))
-        response = client_sock.recvobj()
+def test_withdrawal(group_chat_channel2, user1, user2):
+    with AuthenticatedClient(user1) as user1_sock:
+        with AuthenticatedClient(user2) as user2_sock:
+            user2_sock.sendobj(dict(method='attend', channel=group_chat_channel2))
+            user2_sock.recvobj()
 
-    assert response['method'] == 'withdrawal'
+            user1_sock.sendobj(dict(method='withdrawal', channel=group_chat_channel2))
+            response = user1_sock.recvobj()
+            assert response['method'] == 'withdrawal'
+
+            response = user2_sock.recvobj()
+            assert response['method'] == 'publish'
+            assert response['type'] == 'withdrawal'
+
     try:
-        ChannelJoinInfo.get_item(group_chat_channel1, user1)
+        ChannelJoinInfo.get_item(group_chat_channel2, user1)
     except ItemNotFoundException:
         pass
     else:
