@@ -64,7 +64,7 @@ class LogServer(object):
         queue = Queue()
 
         for _ in xrange(cpu_count() * 2):
-            Thread(target=log_message, args=(queue, last_read_at_buffer)).start()
+            Thread(target=log_message, args=(queue,)).start()
 
         flush_last_read_at_periodically(1)
 
