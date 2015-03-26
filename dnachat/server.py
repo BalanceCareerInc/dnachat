@@ -155,10 +155,13 @@ class BaseChatProtocol(DnaProtocol):
             try:
                 join_info = ChannelJoinInfo.get_item(channel.name, self.user.id)
             except ItemNotFoundException:
-                raise ProtocolError('Not a member of channel: "%s"' % channel.name)
+                self.transport.write(bson.dumps(dict(method=u'withdrawal', channel=channel_name)))
+                return None
             return join_info
 
         def withdrawal(join_info):
+            if not join_info:
+                return
             ChannelWithdrawalLog.put_item(
                 channel=join_info.channel,
                 user_id=join_info.user_id,
