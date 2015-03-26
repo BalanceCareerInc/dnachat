@@ -229,28 +229,17 @@ class BaseChatProtocol(DnaProtocol):
 
     @auth_required
     def do_ack(self, request):
-        def main():
-            message = dict(
-                sender=self.user.id,
-                published_at=request['published_at'],
-                method=u'ack',
-                channel=request['channel']
-            )
-            self.factory.redis_session.publish(request['channel'], bson.dumps(message))
-            deferToThread(refresh_last_read_at, request['channel'], request['published_at'])
-
-        def refresh_last_read_at(channel_name, published_at):
-            for join_info in self.user.join_infos:
-                if join_info.channel != channel_name:
-                    continue
-                join_info.last_read_at = published_at
-                join_info.save()
-                break
-        main()
+        message = dict(
+            sender=self.user.id,
+            published_at=request['published_at'],
+            method=u'ack',
+            channel=request['channel']
+        )
+        self.factory.redis_session.publish(request['channel'], bson.dumps(message))
 
     def publish_message(self, type_, channel_name, message, writer):
 
-        def write_to_sqs( message_):
+        def write_to_sqs(message_):
             self.factory.queue.write(QueueMessage(body=json.dumps(message_)))
 
         message = dict(
