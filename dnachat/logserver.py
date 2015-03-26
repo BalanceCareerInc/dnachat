@@ -50,8 +50,6 @@ def flush_last_read_at():
         join_info.last_read_at = published_at
         join_info.save()
 
-    Timer(1, flush_last_read_at).start()
-
 
 class LogServer(object):
     def __init__(self, redis_host):
