@@ -5,7 +5,7 @@ import time
 from .logger import logger
 
 
-class TransmitDistributor(Thread):
+class Transmitter(Thread):
     def __init__(self, factory):
         Thread.__init__(self)
         self.factory = factory

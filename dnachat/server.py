@@ -15,7 +15,7 @@ from twisted.internet.threads import deferToThread
 from .decorators import in_channel_required, auth_required
 from .dna.protocol import DnaProtocol, ProtocolError
 from .logger import logger
-from .transmission import TransmitDistributor
+from .transmission import Transmitter
 from .settings import conf
 from .models import (Message as DnaMessage, Channel, ChannelJoinInfo,
                      ChannelWithdrawalLog, ChannelUsageLog)
@@ -311,5 +311,5 @@ class ChatFactory(Factory):
         self.channels = dict()
         self.redis_session = redis.StrictRedis(host=redis_host)
         self.queue = sqs.connect_to_region('ap-northeast-1').get_queue(conf['NOTIFICATION_QUEUE_NAME'])
-        TransmitDistributor(self).start()
+        Transmitter(self).start()
 
