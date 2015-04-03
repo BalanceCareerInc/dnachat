@@ -13,12 +13,14 @@ setup(name='dnachat',
       author='Seungyeon Joshua Kim(Acuros)',
       author_email='acuroskr' '@' 'gmail.com',
       install_requires=[
-          'bson>=0.3.3',
           'twisted',
           'redis',
           'boto',
           'bynamodb',
           'pytest'
+      ],
+      dependency_links=[
+          'git+https://github.com/martinkou/bson.git@master#egg=dnachat',
       ],
       entry_points={
           'console_scripts': [
