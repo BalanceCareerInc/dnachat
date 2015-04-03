@@ -47,14 +47,6 @@ class Channel(Model):
     is_group_chat = BooleanAttribute(default=False)
 
     @classmethod
-    def users_of(cls, channel_name):
-        return cls.query('ChannelIndex', name__eq=str(channel_name))
-
-    @classmethod
-    def channels_of(cls, user_id):
-        return cls.query('UserIndex', user_id__eq=str(user_id))
-
-    @classmethod
     def create_channel(cls, user_ids, is_group_chat=False):
         channel = cls.put_item(
             name=str(uuid1()),
