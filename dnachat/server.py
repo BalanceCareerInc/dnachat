@@ -261,11 +261,6 @@ class BaseChatProtocol(DnaProtocol):
         if not self.attended_channel_join_info:
             return
 
-        self.attended_channel_join_info.last_read_at = [
-            ji.last_read_at
-            for ji in self.user.join_infos
-            if ji.channel == self.attended_channel_join_info.channel
-        ][0]
         if hasattr(self.attended_channel_join_info, 'last_published_at'):
             published_at = self.attended_channel_join_info.last_published_at
             delattr(self.attended_channel_join_info, 'last_published_at')
