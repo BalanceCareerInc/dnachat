@@ -236,7 +236,8 @@ class BaseChatProtocol(DnaProtocol):
             method=u'ack',
             channel=request['channel']
         )
-        self.attended_channel_join_info.last_read_at = time.time()
+        if self.attended_channel_join_info:
+            self.attended_channel_join_info.last_read_at = time.time()
         self.factory.redis_session.publish(request['channel'], bson.dumps(message))
 
     def publish_message(self, type_, channel_name, message, writer):
