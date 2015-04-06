@@ -1,5 +1,6 @@
 # -*-coding:utf8-*-
 import bson
+import time
 
 from Queue import Queue, Empty
 from multiprocessing import cpu_count
@@ -9,7 +10,7 @@ from threading import Thread, Timer, RLock
 from .models import Message, ChannelJoinInfo
 from .logger import logger
 
-last_read_at_buffer = dict()
+last_read_at_buffer = []
 lock = RLock()
 
 
@@ -22,7 +23,7 @@ def log_message(queue):
         data = bson.loads(message['data'])
         if data['method'] == 'ack':
             with lock:
-                last_read_at_buffer[(data['channel'], data['sender'])] = data['published_at']
+                last_read_at_buffer.append((data['channel'], data['sender']))
             continue
         logger.debug(data)
         try:
@@ -42,12 +43,12 @@ def flush_last_read_at():
     global last_read_at_buffer, lock
 
     with lock:
-        buffer_ = last_read_at_buffer.copy()
-        last_read_at_buffer.clear()
+        buffer_ = list(last_read_at_buffer)
+        last_read_at_buffer = []
 
-    for (channel, user_id), published_at in buffer_.iteritems():
+    for channel, user_id in buffer_:
         join_info = ChannelJoinInfo.get_item(channel, user_id)
-        join_info.last_read_at = published_at
+        join_info.last_read_at = time.time()
         join_info.save()
 
 
