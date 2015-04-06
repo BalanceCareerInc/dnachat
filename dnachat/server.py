@@ -226,6 +226,7 @@ class BaseChatProtocol(DnaProtocol):
             request['message'],
             self.user.id
         )
+        self.attended_channel_join_info.last_read_at = time.time()
 
     @auth_required
     def do_ack(self, request):
