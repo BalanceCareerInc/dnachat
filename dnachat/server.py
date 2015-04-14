@@ -118,7 +118,7 @@ class BaseChatProtocol(DnaProtocol):
         for join_info in join_infos:
             channel = join_info.channel
             recent_messages = get_recnet_messages(channel)
-            if not recent_messages and not Channel.get_item(name__eq=channel).is_group_chat:
+            if not recent_messages and not Channel.get_item(channel).is_group_chat:
                 continue
             join_infos = get_join_infos(channel)
             channels.append(dict(
