@@ -97,7 +97,7 @@ class BaseChatProtocol(DnaProtocol):
                     type=message.type,
                     published_at=message.published_at
                 )
-                for message in DnaMessage.query(channel__eq=channel, limit=20)
+                for message in DnaMessage.query(channel__eq=channel, scan_index_forward=False, limit=20)
             ]
 
         def get_join_infos(channel):
