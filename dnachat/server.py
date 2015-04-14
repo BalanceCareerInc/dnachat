@@ -87,6 +87,56 @@ class BaseChatProtocol(DnaProtocol):
         main()
 
     @auth_required
+    def do_get_channels(self, request):
+
+        def get_recnet_messages(channel):
+            return [
+                dict(
+                    message=message.message,
+                    writer=message.writer,
+                    type=message.type,
+                    published_at=message.published_at
+                )
+                for message in DnaMessage.query(channel__eq=channel, limit=20)
+            ]
+
+        def get_join_infos(channel):
+            return [
+                dict(
+                    user=join_info.user_id,
+                    joined_at=join_info.joined_at,
+                    last_read_at=join_info.last_read_at
+                )
+                for join_info in ChannelJoinInfo.by_channel(channel)
+                if join_info.user_id != self.user.id
+            ]
+
+        join_infos = ChannelJoinInfo.by_user(self.user.id)
+
+        channels = []
+        users = set()
+        for join_info in join_infos:
+            channel = join_info.channel
+            recent_messages = get_recnet_messages(channel)
+            if not recent_messages:
+                continue
+            join_infos = get_join_infos(channel)
+            channels.append(dict(
+                channel=channel,
+                unread_count=DnaMessage.query(channel__eq=channel, published_at__gt=join_info.last_sent_at).count(),
+                recent_messages=recent_messages,
+                join_infos=join_infos
+            ))
+            [users.add(join_info['user']) for join_info in join_infos]
+
+        response = dict(
+            method=u'get_channels',
+            users=list(users),
+            channels=channels
+        )
+        self.transport.write(bson.dumps(response))
+
+    @auth_required
     def do_unread(self, request):
         def main():
             join_infos = self.user.join_infos
