@@ -27,15 +27,9 @@ class ChannelJoinInfo(Model):
         read_throughput = 1
         write_throughput = 1
 
-    class ChannelIndex(GlobalAllIndex):
-        hash_key = 'channel'
-
-        read_throughput = 1
-        write_throughput = 1
-
     @classmethod
     def by_channel(cls, channel_name):
-        return cls.query('ChannelIndex', channel__eq=str(channel_name))
+        return cls.query(channel__eq=str(channel_name))
 
     @classmethod
     def by_user(cls, user_id):
