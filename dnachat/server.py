@@ -123,7 +123,7 @@ class BaseChatProtocol(DnaProtocol):
             join_infos = get_join_infos(channel)
             channels.append(dict(
                 channel=channel,
-                unread_count=DnaMessage.query(channel__eq=channel, published_at__gt=join_info.last_sent_at).count(),
+                unread_count=DnaMessage.query(channel__eq=channel, published_at__gt=join_info.last_read_at).count(),
                 recent_messages=recent_messages,
                 join_infos=join_infos
             ))
