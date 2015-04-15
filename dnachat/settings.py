@@ -8,6 +8,7 @@ __all__ = 'conf'
 class Settings(object):
     def __init__(self):
         self.config = dict(
+            LOG_QUEUE_NAME='LogQueue',
             NOTIFICATION_QUEUE_NAME='NotificationQueue',
             LOG_LEVEL=logging.INFO,
             CHAT_LOG_FILE_NAME='chat.log',

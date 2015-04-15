@@ -290,7 +290,9 @@ class BaseChatProtocol(DnaProtocol):
     def publish_message(self, type_, channel_name, message, writer):
 
         def write_to_sqs(message_):
-            self.factory.queue.write(QueueMessage(body=json.dumps(message_)))
+            queue_message = QueueMessage(body=json.dumps(message_))
+            self.factory.notification_queue.write(queue_message)
+            self.factory.log_queue.write(queue_message)
 
         message = dict(
             type=unicode(type_),
@@ -354,6 +356,8 @@ class ChatFactory(Factory):
         self.protocol = conf['PROTOCOL']
         self.channels = dict()
         self.redis_session = redis.StrictRedis(host=redis_host)
-        self.queue = sqs.connect_to_region('ap-northeast-1').get_queue(conf['NOTIFICATION_QUEUE_NAME'])
+        sqs_conn = sqs.connect_to_region('ap-northeast-1')
+        self.notification_queue = sqs_conn.get_queue(conf['NOTIFICATION_QUEUE_NAME'])
+        self.log_queue = sqs_conn.get_queue(conf['LOG_QUEUE_NAME'])
         Transmitter(self).start()
 
