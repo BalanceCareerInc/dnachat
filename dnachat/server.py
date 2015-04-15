@@ -38,10 +38,10 @@ class BaseChatProtocol(DnaProtocol):
 
     def do_authenticate(self, request):
         self.user = self.authenticate(request)
+        if self.user is None:
+            raise ProtocolError('Authentication failed')
         self.user.id = str(self.user.id).decode('utf8')
         self.user.join_infos = list(ChannelJoinInfo.by_user(self.user.id))
-        if not self.user:
-            raise ProtocolError('Authentication failed')
         self.protocol_version = request.get('protocol_version')
         self.transport.write(bson.dumps(dict(method=u'authenticate', status=u'OK')))
 
