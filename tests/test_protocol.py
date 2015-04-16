@@ -150,3 +150,16 @@ def test_unread(channel1, user1, user2):
         new_messages = response['messages']
         assert len(new_messages) == 1
         assert new_messages[0]['message'] == u'Text Message'
+
+
+def test_get_channels(user1, group_chat_channel1, group_chat_channel2):
+    with AuthenticatedClient(user1) as client_sock:
+        client_sock.sendobj(dict(method='get_channels'))
+        response = client_sock.recvobj()
+        assert response['method'] == u'get_channels'
+        assert 'users' in response
+        assert 'channels' in response
+        channel_names = [channel['channel'] for channel in response['channels']]
+        assert group_chat_channel1 in channel_names
+        assert group_chat_channel2 in channel_names
+        assert all(channel['is_group_chat'] for channel in response['channels'])

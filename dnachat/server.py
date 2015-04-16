@@ -89,7 +89,7 @@ class BaseChatProtocol(DnaProtocol):
     @auth_required
     def do_get_channels(self, request):
 
-        def get_recnet_messages(channel):
+        def get_recent_messages(channel):
             return [
                 dict(
                     message=message.message,
@@ -113,26 +113,34 @@ class BaseChatProtocol(DnaProtocol):
 
         join_infos = ChannelJoinInfo.by_user(self.user.id)
 
-        channels = []
+        channel_dicts = []
+        channels = dict(
+            (join_info.channel, channel)
+            for join_info, channel in zip(
+                join_infos,
+                Channel.batch_get(*[(join_info.channel,)for join_info in join_infos])
+            )
+        )
         users = set()
         for join_info in join_infos:
-            channel = join_info.channel
-            recent_messages = get_recnet_messages(channel)
-            if not recent_messages and not Channel.get_item(channel).is_group_chat:
+            channel = channels[join_info.channel]
+            recent_messages = get_recent_messages(channel.name)
+            if not recent_messages and not channel.is_group_chat:
                 continue
-            join_infos = get_join_infos(channel)
-            channels.append(dict(
-                channel=channel,
-                unread_count=DnaMessage.query(channel__eq=channel, published_at__gt=join_info.last_read_at).count(),
+            partner_join_info_dicts = get_join_infos(channel.name)
+            channel_dicts.append(dict(
+                channel=join_info.channel,
+                unread_count=DnaMessage.query(channel__eq=channel.name, published_at__gt=join_info.last_read_at).count(),
                 recent_messages=recent_messages,
-                join_infos=join_infos
+                join_infos=partner_join_info_dicts,
+                is_group_chat=channel.is_group_chat
             ))
-            [users.add(join_info['user']) for join_info in join_infos]
+            [users.add(join_info['user']) for join_info in partner_join_info_dicts]
 
         response = dict(
             method=u'get_channels',
             users=list(users),
-            channels=channels
+            channels=channel_dicts
         )
         self.transport.write(bson.dumps(response))
 
