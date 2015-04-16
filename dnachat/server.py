@@ -130,7 +130,10 @@ class BaseChatProtocol(DnaProtocol):
             partner_join_info_dicts = get_join_infos(channel.name)
             channel_dicts.append(dict(
                 channel=join_info.channel,
-                unread_count=DnaMessage.query(channel__eq=channel.name, published_at__gt=join_info.last_read_at).count(),
+                unread_count=DnaMessage.query(
+                    channel__eq=channel.name,
+                    published_at__gt=join_info.last_read_at
+                ).count(),
                 recent_messages=recent_messages,
                 join_infos=partner_join_info_dicts,
                 is_group_chat=channel.is_group_chat
