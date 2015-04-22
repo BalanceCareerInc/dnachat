@@ -21,7 +21,7 @@ class Request(object):
 
     def get(self, key, default=None):
         if key in self._data:
-            return key
+            return self._data[key]
         return default
 
     @classmethod
