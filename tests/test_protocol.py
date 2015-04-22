@@ -134,7 +134,7 @@ def test_publish(channel1, user1, user2):
     assert channel_usage_log.last_published_at == response1['published_at']
 
 
-def test_unread(channel1, user1, user2):
+def test_unread_specific_channel(channel1, user1, user2):
     Message.put_item(
         channel=channel1,
         type=u'text',
@@ -150,6 +150,50 @@ def test_unread(channel1, user1, user2):
         new_messages = response['messages']
         assert len(new_messages) == 1
         assert new_messages[0]['message'] == u'Text Message'
+
+
+def test_unread_all_channel(channel1, user1, user2):
+    Message.put_item(
+        channel=channel1,
+        type=u'text',
+        message=u'Text Message',
+        writer=user1,
+        published_at=time.time()
+    )
+
+    with AuthenticatedClient(user2) as client_sock:
+        client_sock.sendobj(dict(method='unread'))
+        response = client_sock.recvobj()
+        assert response['method'] == u'unread'
+        new_messages = response['messages']
+        assert len(new_messages) == 1
+        assert new_messages[0]['channel'] == channel1
+        assert new_messages[0]['message'] == u'Text Message'
+
+
+def test_unread_before(channel1, user1, user2):
+    Message.put_item(
+        channel=channel1,
+        type=u'text',
+        message=u'Text Message',
+        writer=user1,
+        published_at=time.time()
+    )
+
+    with AuthenticatedClient(user2) as client_sock:
+        client_sock.sendobj(dict(method='unread', before=time.time()))
+        response = client_sock.recvobj()
+        assert response['method'] == u'unread'
+        new_messages = response['messages']
+        assert len(new_messages) == 1
+        assert new_messages[0]['channel'] == channel1
+        assert new_messages[0]['message'] == u'Text Message'
+
+        client_sock.sendobj(dict(method='unread', before=time.time() - 999))
+        response = client_sock.recvobj()
+        assert response['method'] == u'unread'
+        new_messages = response['messages']
+        assert len(new_messages) == 0
 
 
 def test_get_channels(user1, group_chat_channel1, group_chat_channel2):
