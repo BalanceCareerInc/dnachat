@@ -111,15 +111,12 @@ class BaseChatProtocol(DnaProtocol):
                 if join_info.user_id != self.user.id
             ]
 
-        join_infos = ChannelJoinInfo.by_user(self.user.id)
+        join_infos = list(ChannelJoinInfo.by_user(self.user.id))
 
         channel_dicts = []
         channels = dict(
-            (join_info.channel, channel)
-            for join_info, channel in zip(
-                join_infos,
-                Channel.batch_get(*[(join_info.channel,)for join_info in join_infos])
-            )
+            (channel.name, channel)
+            for channel in Channel.batch_get(*[(join_info.channel,) for join_info in join_infos])
         )
         users = set()
         for join_info in join_infos:
