@@ -312,6 +312,7 @@ class BaseChatProtocol(DnaProtocol):
             channel=request['channel']
         )
         self.factory.redis_session.publish(request['channel'], bson.dumps(message))
+        self.factory.log_queue.write(QueueMessage(body=json.dumps(message)))
 
     def publish_message(self, type_, channel_name, message, writer):
 
