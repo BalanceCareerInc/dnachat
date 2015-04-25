@@ -19,7 +19,7 @@ def run_logger(config_file='localconfig.py'):
     patch_from_config(conf)
     init_logger(conf['LOGGER_LOG_FILE_NAME'], conf['LOG_LEVEL'])
     from dnachat.logserver import LogServer
-    LogServer(conf['REDIS_HOST']).start()
+    LogServer().start()
 
 
 def run_notisender(config_file='localconfig.py'):
