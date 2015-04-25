@@ -1,8 +1,9 @@
 # -*-coding:utf8-*-
+from Queue import Empty
 import time
 import json
 
-from multiprocessing import cpu_count, Process, Lock
+from multiprocessing import cpu_count, Process, Queue
 from threading import Timer
 
 from boto import sqs
@@ -11,21 +12,16 @@ from dnachat.settings import conf
 from .models import Message, ChannelJoinInfo
 from .logger import logger
 
-last_read_at_buffer = []
-lock = Lock()
 
-
-def log_message(queue):
+def log_message(message_queue, last_read_at_queue):
     while True:
-        message = queue.read(wait_time_seconds=5)
+        message = message_queue.read(wait_time_seconds=5)
         if not message:
             continue
-        queue.delete_message(message)
+        message_queue.delete_message(message)
         data = json.loads(message.get_body())
         if data['method'] == 'ack':
-            with lock:
-                last_read_at_buffer.append((data['channel'], data['sender']))
-            continue
+            last_read_at_queue.put((data['channel'], data['sender']))
         logger.debug(data)
         try:
             Message.put_item(**data)
@@ -33,35 +29,34 @@ def log_message(queue):
             logger.error('Error on save message', exc_info=True)
 
 
-def flush_last_read_at_periodically(second):
+def flush_last_read_at_periodically(second, last_read_at_queue):
     def wrap():
-        flush_last_read_at_periodically(second)
-        flush_last_read_at()
+        flush_last_read_at_periodically(second, last_read_at_queue)
+        flush_last_read_at(last_read_at_queue)
     Timer(second, wrap).start()
 
 
-def flush_last_read_at():
-    global last_read_at_buffer, lock
-
-    with lock:
-        buffer_ = list(last_read_at_buffer)
-        last_read_at_buffer = []
-
-    for channel, user_id in buffer_:
+def flush_last_read_at(last_read_at_queue):
+    while True:
+        try:
+            channel, user_id = last_read_at_queue.get_nowait()
+        except Empty:
+            break
         join_info = ChannelJoinInfo.get_item(channel, user_id)
         join_info.last_read_at = time.time()
         join_info.save()
 
 
 class LogServer(object):
-    def __init__(self, redis_host):
+    def __init__(self):
         sqs_conn = sqs.connect_to_region('ap-northeast-1')
         self.queue = sqs_conn.get_queue(conf['LOG_QUEUE_NAME'])
 
     def start(self):
-        flush_last_read_at_periodically(1)
+        last_read_at_queue = Queue()
+        flush_last_read_at_periodically(1, last_read_at_queue)
 
         for _ in xrange(cpu_count() - 1):
-            Process(target=log_message, args=(self.queue,)).start()
-        log_message(self.queue)
+            Process(target=log_message, args=(self.queue, last_read_at_queue)).start()
+        log_message(self.queue, last_read_at_queue)
 
