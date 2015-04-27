@@ -153,7 +153,7 @@ class BaseChatProtocol(DnaProtocol):
             if 'channel' in request:
                 join_infos = [
                     join_info
-                    for join_info in self.user.join_infos
+                    for join_info in join_infos
                     if join_info.channel == request['channel']
                 ]
                 if not join_infos:
@@ -350,6 +350,13 @@ class BaseChatProtocol(DnaProtocol):
                 channel=self.attended_channel_join_info.channel,
                 last_published_at=published_at
             )
+
+        join_info = ChannelJoinInfo.get_item(self.attended_channel_join_info.channel, self.user.id)
+        join_info.last_sent_at = time.time()
+        join_info.save()
+        cached_idx = [i for i, ji in enumerate(self.user.join_infos) if ji.channel == join_info.channel][0]
+        self.user.join_infos[cached_idx] = join_info
+
         self.factory.channels[self.attended_channel_join_info.channel].remove(self)
         self.attended_channel_join_info = None
 
