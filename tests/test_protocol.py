@@ -70,8 +70,10 @@ def test_create(user1):
 def test_join(group_chat_channel1, user1):
     with AuthenticatedClient(user1) as client_sock:
         client_sock.sendobj(dict(method='join', channel=group_chat_channel1))
+        client_sock.recvobj()
         response = client_sock.recvobj()
 
+    print response
     assert response['method'] == 'join'
     assert response['channel'] == group_chat_channel1
     assert response['partner_ids'] == [user1]

@@ -43,6 +43,8 @@ class BaseChatProtocol(DnaProtocol):
         self.user.id = str(self.user.id).decode('utf8')
         self.user.join_infos = list(ChannelJoinInfo.by_user(self.user.id))
         self.protocol_version = request.get('protocol_version')
+        for join_info in self.user.join_infos:
+            self.factory.channels.setdefault(join_info.channel, []).append(self)
         self.transport.write(bson.dumps(dict(method=u'authenticate', status=u'OK')))
 
     @auth_required
@@ -262,12 +264,6 @@ class BaseChatProtocol(DnaProtocol):
 
         def attend_channel(join_info):
             self.attended_channel_join_info = join_info
-            clients = [
-                client
-                for client in self.factory.channels.get(join_info.channel, [])
-                if client.user.id != self.user.id
-            ] + [self]
-            self.factory.channels[join_info.channel] = clients
 
             others_join_infos = [
                 channel_
@@ -348,12 +344,13 @@ class BaseChatProtocol(DnaProtocol):
                 channel=self.attended_channel_join_info.channel,
                 last_published_at=published_at
             )
-        self.factory.channels[self.attended_channel_join_info.channel].remove(self)
         self.attended_channel_join_info = None
 
     def connectionLost(self, reason=None):
         logger.info('Connection Lost : %s' % reason)
         self.exit_channel()
+        for join_info in self.user.join_infos:
+            self.factory.channels[join_info.channel].remove(self)
 
     def authenticate(self, request):
         """
