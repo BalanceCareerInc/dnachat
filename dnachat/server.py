@@ -75,6 +75,7 @@ class BaseChatProtocol(DnaProtocol):
             channel, join_infos = Channel.create_channel(user_ids, is_group_chat)
             my_join_info = [join_info for join_info in join_infos if join_info.user_id == self.user.id][0]
             self.user.join_infos.append(my_join_info)
+            self.factory.channels.setdefault(my_join_info.channel, []).append(self)
             return channel
 
         def send_channel(channel, partner_ids):
@@ -165,7 +166,6 @@ class BaseChatProtocol(DnaProtocol):
         def send_messages(join_infos, before=None):
             messages = []
             updated_join_infos = []
-            last_sent_at = max([ji.last_sent_at for ji in join_infos])
             for join_info in join_infos:
                 if before:
                     new_messages = messages_before(join_info.channel, before)
@@ -295,6 +295,7 @@ class BaseChatProtocol(DnaProtocol):
     @in_channel_required
     def do_publish(self, request):
         self.ensure_valid_message(request)
+        self.attended_channel_join_info.last_sent_at = time.time()
         self.publish_message(
             request['type'],
             self.attended_channel_join_info.channel,
