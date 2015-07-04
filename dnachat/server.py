@@ -113,15 +113,13 @@ class BaseChatProtocol(DnaProtocol):
                 if join_info.user_id != self.user.id
             ]
 
-        join_infos = list(ChannelJoinInfo.by_user(self.user.id))
-
         channel_dicts = []
         channels = dict(
             (channel.name, channel)
-            for channel in Channel.batch_get(*[(join_info.channel,) for join_info in join_infos])
+            for channel in Channel.batch_get(*[(join_info.channel,) for join_info in self.user.join_infos])
         )
         users = set()
-        for join_info in join_infos:
+        for join_info in self.user.join_infos:
             channel = channels[join_info.channel]
             recent_messages = get_recent_messages(channel.name)
             if not recent_messages and not channel.is_group_chat:
@@ -137,7 +135,11 @@ class BaseChatProtocol(DnaProtocol):
                 join_infos=partner_join_info_dicts,
                 is_group_chat=channel.is_group_chat
             ))
-            [users.add(join_info['user']) for join_info in partner_join_info_dicts]
+            [users.add(partner_join_info_dict['user']) for partner_join_info_dict in partner_join_info_dicts]
+
+            last_sent_at = time.time()
+            join_info.last_sent_at = last_sent_at
+            join_info.save()
 
         response = dict(
             method=u'get_channels',
@@ -153,7 +155,7 @@ class BaseChatProtocol(DnaProtocol):
             if 'channel' in request:
                 join_infos = [
                     join_info
-                    for join_info in self.user.join_infos
+                    for join_info in join_infos
                     if join_info.channel == request['channel']
                 ]
                 if not join_infos:
@@ -163,6 +165,7 @@ class BaseChatProtocol(DnaProtocol):
         def send_messages(join_infos, before=None):
             messages = []
             updated_join_infos = []
+            last_sent_at = max([ji.last_sent_at for ji in join_infos])
             for join_info in join_infos:
                 if before:
                     new_messages = messages_before(join_info.channel, before)

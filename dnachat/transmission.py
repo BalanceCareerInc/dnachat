@@ -1,5 +1,6 @@
 # -*-coding:utf8-*-
 from threading import Thread
+import time
 
 from .logger import logger
 
@@ -17,5 +18,6 @@ class Transmitter(Thread):
             for client in self.factory.channels.get(message['channel'], []):
                 try:
                     client.transport.write(message['data'])
+                    client.attended_channel_join_info.last_sent_at = time.time()
                 except Exception, e:
                     logger.error('TransmissionError: %s' % str(e), exc_info=True)
