@@ -37,6 +37,7 @@ class BaseChatProtocol(DnaProtocol):
         processor(request)
 
     def do_authenticate(self, request):
+        print self
         self.user = self.authenticate(request)
         if self.user is None:
             raise ProtocolError('Authentication failed')
@@ -76,6 +77,12 @@ class BaseChatProtocol(DnaProtocol):
             my_join_info = [join_info for join_info in join_infos if join_info.user_id == self.user.id][0]
             self.user.join_infos.append(my_join_info)
             self.factory.channels.setdefault(my_join_info.channel, []).append(self)
+
+            other_user_ids = [join_info.user_id for join_info in join_infos if join_info.user_id != self.user.id]
+            self.factory.redis_session.publish(
+                'create_channel',
+                bson.dumps(dict(channel=channel.name, users=other_user_ids))
+            )
             return channel
 
         def send_channel(channel, partner_ids):
@@ -355,6 +362,8 @@ class BaseChatProtocol(DnaProtocol):
 
     def connectionLost(self, reason=None):
         logger.info('Connection Lost : %s' % reason)
+        if not self.user:
+            return
         self.exit_channel()
         for join_info in self.user.join_infos:
             self.factory.channels[join_info.channel].remove(self)

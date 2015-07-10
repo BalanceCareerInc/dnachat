@@ -1,4 +1,5 @@
 # -*-coding:utf8-*-
+import bson
 from threading import Thread
 
 from .logger import logger
@@ -14,6 +15,17 @@ class Transmitter(Thread):
         pubsub.psubscribe('*')
         pubsub.listen().next()
         for message in pubsub.listen():
+            if message['channel'] == 'create_channel':
+                data = bson.loads(message['data'])
+                clients = reduce(lambda x, y: x.union(y), self.factory.channels.values(), set())
+                listening_users = dict((c.user.id, c) for c in clients if c.user)
+                channel_users = set(data['users'])
+                applying_users = set(listening_users.keys()) & channel_users
+                if applying_users:
+                    self.factory.channels.setdefault(data['channel']).extend(
+                        [listening_users[user] for user in applying_users]
+                    )
+                continue
             for client in self.factory.channels.get(message['channel'], []):
                 try:
                     client.transport.write(message['data'])
