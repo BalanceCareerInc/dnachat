@@ -37,7 +37,6 @@ class BaseChatProtocol(DnaProtocol):
         processor(request)
 
     def do_authenticate(self, request):
-        print self
         self.user = self.authenticate(request)
         if self.user is None:
             raise ProtocolError('Authentication failed')
