@@ -36,6 +36,6 @@ class Transmitter(Thread):
         channel_users = set(data['users'])
         applying_users = set(listening_users.keys()) & channel_users
         if applying_users:
-            self.factory.channels.setdefault(data['channel']).extend(
+            self.factory.channels.setdefault(data['channel'], []).extend(
                 [listening_users[user] for user in applying_users]
             )
