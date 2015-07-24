@@ -10,6 +10,11 @@ class Settings(object):
         self.config = dict(
             LOG_QUEUE_NAME='LogQueue',
             NOTIFICATION_QUEUE_NAME='NotificationQueue',
+            API_QUEUE_NAME='ApiQueue',
+            QUEUE_POLLING_INTERVAL=5,
+
+            API_PROCESSOR=None,
+
             LOG_LEVEL=logging.INFO,
             CHAT_LOG_FILE_NAME='chat.log',
             LOGGER_LOG_FILE_NAME='logger.log',

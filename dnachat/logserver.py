@@ -1,8 +1,8 @@
 # -*-coding:utf8-*-
-from Queue import Empty
 import time
 import json
 
+from Queue import Empty
 from multiprocessing import cpu_count, Process, Queue
 from threading import Timer
 
@@ -15,18 +15,19 @@ from .logger import logger
 
 def log_message(message_queue, last_read_at_queue):
     while True:
-        message = message_queue.read(wait_time_seconds=5)
+        message = message_queue.read(wait_time_seconds=conf['QUEUE_POLLING_INTERVAL'])
         if not message:
             continue
         message_queue.delete_message(message)
         data = json.loads(message.get_body())
         if data['method'] == 'ack':
             last_read_at_queue.put((data['channel'], data['sender']))
+            continue
         logger.debug(data)
         try:
             Message.put_item(**data)
         except Exception, e:
-            logger.error('Error on save message', exc_info=True)
+            logger.error('Error on save message\n%s' % str(data), exc_info=True)
 
 
 def flush_last_read_at_periodically(second, last_read_at_queue):

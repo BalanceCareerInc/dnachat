@@ -27,6 +27,17 @@ class ChannelJoinInfo(Model):
         read_throughput = 1
         write_throughput = 1
 
+    @property
+    def partners_last_read_at(self):
+        partners = self.get_partners(self.channel, self.user_id)
+        if Channel.get_item(self.channel).is_group_chat:
+            return dict(
+                (join_info.user_id, join_info.last_read_at)
+                for join_info in partners
+            )
+        else:
+            return partners[0].last_read_at
+
     @classmethod
     def by_channel(cls, channel_name):
         return cls.query(channel__eq=str(channel_name))
@@ -34,6 +45,14 @@ class ChannelJoinInfo(Model):
     @classmethod
     def by_user(cls, user_id):
         return cls.query('UserIndex', user_id__eq=str(user_id))
+
+    @classmethod
+    def get_partners(cls, channel_name, user_id):
+        return [
+            join_info
+            for join_info in cls.by_channel(channel_name)
+            if join_info.user_id != user_id
+        ]
 
 
 class Channel(Model):

@@ -12,18 +12,26 @@ from twisted.internet import reactor
 
 import config
 from dnachat.models import Message, Channel, ChannelJoinInfo, ChannelUsageLog, ChannelWithdrawalLog
-from dnachat.runner import run_dnachat
+from dnachat.runner import run_dnachat, run_logger
 from dnachat import models
 
 
 class ChatServerThread(Thread):
     def __init__(self):
         Thread.__init__(self)
-        self._stop = False
+        self.daemon = True
 
     def run(self):
         run_dnachat('tests/config.py')
 
+
+class ChatLoggerThread(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+        self.daemon = True
+
+    def run(self):
+        run_logger('tests/config.py')
 
 chat_server = None
 db_server = None
@@ -35,6 +43,8 @@ def pytest_configure():
 
     chat_server = ChatServerThread()
     chat_server.start()
+
+    ChatLoggerThread().start()
 
     shutil.rmtree('tests/local_dynamodb/testdb', True)
     os.mkdir('tests/local_dynamodb/testdb')
@@ -54,6 +64,7 @@ def pytest_configure():
             obj.create_table()
 
     time.sleep(0.5)
+    os.putenv("PYTEST_TIMEOUT", "3")
 
 
 def pytest_runtest_teardown():
