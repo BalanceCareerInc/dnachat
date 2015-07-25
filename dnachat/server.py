@@ -140,18 +140,6 @@ class BaseChatProtocol(DnaProtocol):
                 for join_info in ChannelJoinInfo.get_partners(channel_name, self.user.id)
             ]
 
-        def get_unread_count(_recent_messages, _join_info):
-            count = len([
-                1 for m in _recent_messages
-                if m['published_at'] > _join_info.last_read_at and m['type'] == 'text'
-            ])
-            if count == len([1 for m in _recent_messages if m['type'] == 'text']):
-                return len([1 for m in DnaMessage.query(
-                    channel__eq=join_info.channel,
-                    published_at__gt=_join_info.last_read_at
-                ) if m.type == 'text'])
-            return count
-
         channel_dicts = []
         users = set()
         for channel_name in self.get_activated_channels(self.user):
@@ -168,7 +156,10 @@ class BaseChatProtocol(DnaProtocol):
             channel_dicts.append(dict(
                 channel=join_info.channel,
                 is_group_chat=False,
-                unread_count=get_unread_count(recent_messages, join_info),
+                unread_count=DnaMessage.query(
+                    channel__eq=join_info.channel,
+                    published_at__gt=join_info.last_read_at
+                ).count(),
                 recent_messages=recent_messages,
                 join_infos=partner_join_info_dicts,
             ))
