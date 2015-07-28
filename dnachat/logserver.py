@@ -20,8 +20,8 @@ def log_message(message_queue, last_read_at_queue):
             continue
         message_queue.delete_message(message)
         data = json.loads(message.get_body())
+        last_read_at_queue.put((data['channel'], data.get('sender', data.get('writer'))))
         if data['method'] == 'ack':
-            last_read_at_queue.put((data['channel'], data['sender']))
             continue
         logger.debug(data)
         try:
