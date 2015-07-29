@@ -184,14 +184,16 @@ class BaseChatProtocol(DnaProtocol):
                 ]
                 if not join_infos:
                     raise ProtocolError('Not a valid channel')
-            deferToThread(send_messages, join_infos, request.get('before'))
+            deferToThread(send_messages, join_infos, request.get('before'), request.get('after'))
 
-        def send_messages(join_infos, before=None):
+        def send_messages(join_infos, before=None, after=None):
             messages = []
             updated_join_infos = []
             for join_info in join_infos:
                 if before:
                     new_messages = messages_before(join_info.channel, before)
+                elif after:
+                    new_messages = messages_after(join_info.channel, after)
                 else:
                     new_messages = messages_after(join_info.channel, join_info.last_sent_at)
 
