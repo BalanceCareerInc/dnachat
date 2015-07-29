@@ -38,8 +38,6 @@ class NotificationSender(object):
                 gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
                 data = dict(default='default message', GCM=gcm_json)
                 for join_info in ChannelJoinInfo.by_channel(message['channel']):
-                    if join_info.user_id == message['writer']:
-                        continue
                     try:
                         logger.debug('\t%s' % str(self.sns_conn.publish(
                             message=json.dumps(data, ensure_ascii=False),
