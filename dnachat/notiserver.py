@@ -34,19 +34,28 @@ class NotificationSender(object):
                 queue_message = (yield)
                 message = json.loads(queue_message.get_body())
                 logger.debug('Received: %s' % message)
-                message['gcm_type'] = 'chat'
-                gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
-                data = dict(default='default message', GCM=gcm_json)
                 for join_info in ChannelJoinInfo.by_channel(message['channel']):
-                    try:
-                        logger.debug('\t%s' % str(self.sns_conn.publish(
-                            message=json.dumps(data, ensure_ascii=False),
-                            target_arn=conf['PROTOCOL'].get_user_by_id(join_info.user_id).endpoint_arn,
-                            message_structure='json'
-                        )))
-                    except boto.exception.BotoServerError, e:
-                        print e
-                        logger.error('BotoError', exc_info=True)
+                    endpoint_arn = conf['PROTOCOL'].get_user_by_id(join_info.user_id).endpoint_arn
+                    if endpoint_arn:
+                        self.send_via_gcm(endpoint_arn, message)
+                    elif callable(conf['SMS_SENDER']) and join_info.user_id != message['writer']:
+                        conf['SMS_SENDER'](join_info, message)
                 self.queue.delete_message(queue_message)
         except GeneratorExit:
             pass
+
+    def send_via_gcm(self, endpoint_arn, message):
+        message['gcm_type'] = 'chat'
+        gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
+        data = dict(default='default message', GCM=gcm_json)
+        try:
+            result = self.sns_conn.publish(
+                message=json.dumps(data, ensure_ascii=False),
+                target_arn=endpoint_arn,
+                message_structure='json'
+            )
+        except boto.exception.BotoServerError, e:
+            print e
+            logger.error('BotoError', exc_info=True)
+        else:
+            logger.debug('\tGCM: %s' % str(result))

@@ -14,6 +14,7 @@ class Settings(object):
             QUEUE_POLLING_INTERVAL=5,
 
             API_PROCESSOR=None,
+            SMS_SENDER=None,
 
             LOG_LEVEL=logging.INFO,
             CHAT_LOG_FILE_NAME='chat.log',
