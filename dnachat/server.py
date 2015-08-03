@@ -193,7 +193,7 @@ class BaseChatProtocol(DnaProtocol):
                 if before:
                     new_messages = messages_before(join_info.channel, before)
                 elif after:
-                    new_messages = messages_after(join_info.channel, after)
+                    new_messages = messages_after(join_info.channel, min(after, join_info.last_sent_at))
                 else:
                     new_messages = messages_after(join_info.channel, join_info.last_sent_at)
 
