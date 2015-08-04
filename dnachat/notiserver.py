@@ -39,6 +39,7 @@ class NotificationSender(object):
                     if endpoint_arn:
                         self.send_via_gcm(endpoint_arn, message)
                     elif callable(conf['SMS_SENDER']) and join_info.user_id != message['writer']:
+                        logger.info('Send sms: {0} {1}'.format(join_info.user_id, message['published_at']))
                         conf['SMS_SENDER'](join_info, message)
                 self.queue.delete_message(queue_message)
         except GeneratorExit:
