@@ -55,7 +55,7 @@ class BaseChatProtocol(DnaProtocol):
     def do_authenticate(self, request):
         self.user = self.authenticate(request)
         if self.user is None:
-            raise ProtocolError('Authentication failed')
+            return
         self.user.id = str(self.user.id).decode('utf8')
         self.factory.clients_by_user_id.setdefault(self.user.id, []).append(self)
 
