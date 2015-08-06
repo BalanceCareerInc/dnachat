@@ -10,6 +10,7 @@ from boto.sqs.message import Message as QueueMessage
 from bynamodb.exceptions import ItemNotFoundException
 from twisted.internet.protocol import Factory
 from twisted.internet.threads import deferToThread
+from twisted.internet.error import ConnectionDone
 
 from .decorators import auth_required
 from .dna.protocol import DnaProtocol, ProtocolError
@@ -327,7 +328,11 @@ class BaseChatProtocol(DnaProtocol):
         self.last_sent_ats[channel_name] = published_at
 
     def connectionLost(self, reason=None):
-        logger.info('Connection Lost : %s' % reason)
+        if reason.type is ConnectionDone:
+            logger.info('Connection Done : %s' % reason)
+        else:
+            logger.warning('Connection Lost : %s' % reason)
+
         if not self.user:
             return
 
