@@ -202,7 +202,11 @@ class BaseChatProtocol(DnaProtocol):
                     updated_join_infos.append(join_info)
                     messages += new_messages
 
-            self.transport.write(bson.dumps(dict(method=u'unread', messages=messages)))
+            self.transport.write(bson.dumps(dict(
+                method=u'unread',
+                channel=join_infos[0].channel,
+                messages=messages
+            )))
 
             for join_info in updated_join_infos:
                 join_info.last_sent_at = time.time()
@@ -213,7 +217,7 @@ class BaseChatProtocol(DnaProtocol):
                 message.to_dict()
                 for message in DnaMessage.query(
                     channel__eq=channel,
-                    published_at__lte=before,
+                    published_at__lt=before,
                     scan_index_forward=False,
                     limit=100
                 )
