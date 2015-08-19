@@ -1,14 +1,15 @@
 #DNAChat
-This is a lightweight chatting server based on AWS written in Python, Twisted and bson. It has features such as live chatting, logging and push notification for mobile devices. 
+This is a lightweight chatting server based on AWS written in Python, Twisted and using bson. It has features such as live chatting, logging and push notification for mobile devices. 
 
 
 ###Performance
 * EC2: t2.medium x 2 and ElastiCache Redis t1.micro x 1 
-* 80,000 transactions per minutes
+* 80,000 transactions per minutes - One transaction is from sending message to target device to receiving ack message from target
 
 ## Live Demo
-http://dnachat.test.url
+Will be uploaded
 
 ###How it works?
 
 ###How to install?
+
