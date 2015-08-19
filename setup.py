@@ -17,10 +17,8 @@ setup(name='dnachat',
           'redis',
           'boto',
           'bynamodb',
-          'pytest'
-      ],
-      dependency_links=[
-          'git+https://github.com/martinkou/bson.git@master#egg=dnachat',
+          'pytest',
+          'bson'
       ],
       entry_points={
           'console_scripts': [
