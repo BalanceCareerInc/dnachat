@@ -48,7 +48,8 @@ class NotificationSender(object):
     def send_via_gcm(self, endpoint_arn, message):
         message['gcm_type'] = 'chat'
         gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
-        data = dict(default='default message', GCM=gcm_json)
+        apns_json = json.dumps(dict(aps=dict(alert=message['message'], message=message)), ensure_ascii=False)
+        data = dict(default='default message', GCM=gcm_json, APNS_SANDBOX=apns_json, APNS=apns_json)
         try:
             result = self.sns_conn.publish(
                 message=json.dumps(data, ensure_ascii=False),
