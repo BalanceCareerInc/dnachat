@@ -37,7 +37,7 @@ class NotificationSender(object):
                 for join_info in ChannelJoinInfo.by_channel(message['channel']):
                     endpoint_arn = conf['PROTOCOL'].get_user_by_id(join_info.user_id).endpoint_arn
                     if endpoint_arn:
-                        self.send_via_gcm(endpoint_arn, message)
+                        self.send_via_notification(endpoint_arn, message)
                     elif callable(conf['SMS_SENDER']) and join_info.user_id != message['writer']:
                         logger.info('Send sms: {0} {1}'.format(join_info.user_id, message['published_at']))
                         conf['SMS_SENDER'](join_info, message)
@@ -45,10 +45,16 @@ class NotificationSender(object):
         except GeneratorExit:
             pass
 
-    def send_via_gcm(self, endpoint_arn, message):
+    def send_via_notification(self, endpoint_arn, message):
         message['gcm_type'] = 'chat'
         gcm_json = json.dumps(dict(data=message), ensure_ascii=False)
-        apns_json = json.dumps(dict(aps=dict(alert=message['message'], message=message)), ensure_ascii=False)
+        apns_json = json.dumps(
+            dict(aps=dict(
+                alert=message.get('text', message['message']),
+                message=message
+            )),
+            ensure_ascii=False
+        )
         data = dict(default='default message', GCM=gcm_json, APNS_SANDBOX=apns_json, APNS=apns_json)
         try:
             result = self.sns_conn.publish(

@@ -381,7 +381,7 @@ class ChatFactory(Factory):
         if conf['API_PROCESSOR']:
             ApiListener(self, conf['API_PROCESSOR']).start()
 
-    def publish_message(self, type_, channel_name, message, writer):
+    def publish_message(self, type_, channel_name, message, writer, additional_data=None):
         def write_to_sqs(message_):
             queue_message = QueueMessage(body=json.dumps(message_))
             self.notification_queue.write(queue_message)
@@ -396,6 +396,8 @@ class ChatFactory(Factory):
             published_at=published_at,
             method=u'publish',
         )
+        if isinstance(additional_data, dict):
+            message.update(additional_data)
         self.redis_session.publish(channel_name, bson.dumps(message))
         deferToThread(write_to_sqs, message)
         return published_at
